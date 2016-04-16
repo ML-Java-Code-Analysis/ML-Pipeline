@@ -10,7 +10,7 @@ Es wird Python 3.5 mit Scikit-learn und SQLAlchemy benötigt. Am einfachsten geh
   * 
 2. Environment aufsetzen:
   * In der Kommandozeile (Windows):
-  * `conda create --name ml scikit-learn sqlalchemy`
+  * `conda create --name ml scikit-learn sqlalchemy pymysql`
 
     `activate ml`
     

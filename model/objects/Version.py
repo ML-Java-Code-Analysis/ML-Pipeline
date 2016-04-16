@@ -23,3 +23,4 @@ class Version(Base):
     file_size = Column(Integer)
     deleted = Column(Boolean)
     lines = relationship("Line")
+    feature_values = relationship("FeatureValue")

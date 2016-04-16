@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 from configparser import ConfigParser
+from datetime import datetime
 
 # Database Options
 database_dialect = None
@@ -16,6 +17,15 @@ logging_file = None
 logging_override = True
 logging_format = '%(asctime)s [%(levelname)s] %(message)s'
 logging_date_format = '%Y.%m.%d %H:%M:%S'
+
+# Repository options
+repository_name = None
+
+# Dataset options
+dataset_learn_start = None
+dataset_learn_end = None
+dataset_test_start = None
+dataset_test_end = None
 
 
 def read_config(config_file):
@@ -48,14 +58,28 @@ def read_config(config_file):
         _read_option(config, logging_section, 'format')
         _read_option(config, logging_section, 'date_format')
 
+    repository_section = 'REPOSITORY'
+    if config.has_section(repository_section):
+        _read_option(config, repository_section, 'name', optional=False)
+    else:
+        raise ConfigError(
+            '%s Section not found in Config file. Repository information must be provided.' % repository_section)
+
+    dataset_section = 'DATASET'
+    if config.has_section(dataset_section):
+        _read_option(config, dataset_section, 'learn_start', value_type=TYPE_DATE)
+        _read_option(config, dataset_section, 'learn_end', value_type=TYPE_DATE)
+        _read_option(config, dataset_section, 'test_start', value_type=TYPE_DATE)
+        _read_option(config, dataset_section, 'test_end', value_type=TYPE_DATE)
 
 TYPE_STRING = 1
 TYPE_INT = 2
 TYPE_FLOAT = 3
 TYPE_BOOLEAN = 4
+TYPE_DATE = 5
 
 
-def _read_option(config, section, option, value_type=TYPE_STRING, target=None, optional=True):
+def _read_option(config, section, option, value_type=TYPE_STRING, target=None, optional=True, date_format='%Y.%m.%d'):
     """ Reads an option into a global variable.
 
     If no target is provided, the global variable is called <section>_<option>.
@@ -67,6 +91,7 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
         value_type (int): Optional. The type. Use one of the TYPE_* constants
         target (str): Optional. The name of the gobal variable to be written
         optional (bool): Optional. If False, an Error will be thrown if the option is not found.
+        date_format (str): Optional. The format to convert datestrings to dates. Only used when valuetype is Date.
     """
     if config.has_option(section, option):
         if value_type == TYPE_STRING:
@@ -77,6 +102,9 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
             value = config.getfloat(section, option)
         elif value_type == TYPE_BOOLEAN:
             value = config.getboolean(section, option)
+        elif value_type == TYPE_DATE:
+            value = config.get(section, option)
+            value = datetime.strptime(value, date_format)
         else:
             raise ValueError("No valid Type provided")
 

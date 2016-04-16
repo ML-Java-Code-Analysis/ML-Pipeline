@@ -3,6 +3,7 @@
 import logging
 import argparse
 
+from ml import Dataset
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -18,10 +19,24 @@ def main():
         die()
     init_logging()
     try:
-        DB.create_db()
+        DB.init_db()
     except DBError:
         logging.critical("DB Model could not be created!")
         die()
+
+    # TODO: Get all(?) Versions in a certain range from the DB (maybe separate learn/test)
+    learn_dataset = Dataset.get_dataset_from_range(
+        Config.repository_name,
+        Config.dataset_learn_start,
+        Config.dataset_learn_end)
+    if learn_dataset is None:
+        pass    #TODO: handle
+
+    # TODO: Read their features into an array
+    # TODO: Feed the array to the ML Machine
+    # TODO: Test on the Test Set
+    # TODO: Print score, some useful analytics and some fancy charts
+    # TODO: Maybe save classifier?
 
     logging.info("All done. Exiting ML Pipeline")
 

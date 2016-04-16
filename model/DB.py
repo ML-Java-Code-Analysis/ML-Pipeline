@@ -32,6 +32,7 @@ def __get_engine():
         port_string += ':' + str(port)
 
     if __engine is None:
+        logging.debug("Creating %s engine" % db_dialect.upper())
         if db_dialect.upper() == 'SQLITE':
             __engine = create_engine('sqlite:///{0}.db'.format(db_name))
         elif db_dialect.upper() == 'MYSQL':
@@ -65,7 +66,8 @@ def __get_session(engine):
 
 
 # noinspection PyUnresolvedReferences
-def create_db():
+def init_db():
+    logging.debug("Initializing DB")
     # Import all ORM objects to register them in SQLAlchemy Base
     from model.objects.IssueTracking import IssueTracking
     from model.objects.Repository import Repository
@@ -74,6 +76,7 @@ def create_db():
     from model.objects.Issue import Issue
     from model.objects.Version import Version
     from model.objects.Line import Line
+    from model.objects.FeatureValue import FeatureValue
 
     engine = __get_engine()
     if engine is None:
@@ -83,6 +86,7 @@ def create_db():
 
 
 def create_session():
+    logging.debug("Creating new DB session")
     engine = __get_engine()
     if engine is None:
         logging.critical("DB Engine could not be created! Session creation failed!")

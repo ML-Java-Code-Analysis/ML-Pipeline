@@ -3,14 +3,15 @@
 import logging
 import argparse
 
+from model import DB
 from utils import Config
 
 
 def main():
     cli_args = parse_arguments()
     Config.read_config(cli_args.config_file)
-
     init_logging()
+    DB.create_db()
 
     logging.info("All done. Exiting ML Pipeline")
 

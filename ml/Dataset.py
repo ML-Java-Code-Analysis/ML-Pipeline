@@ -8,6 +8,7 @@ from model import DB
 from model.objects.Repository import Repository
 from model.objects.Version import Version
 from model.objects.Commit import Commit
+import numpy as np
 
 
 def get_dataset_from_range(repository, start, end):
@@ -41,12 +42,15 @@ def get_dataset_from_range(repository, start, end):
         return None
     logging.debug("%s commits found. Creating Dataset Array" % len(commits))
 
+    # TODO: Maybe determine size of Feature matrix beforehand and initialize it
+
     for commit in commits:
         for version in commit.versions:
+            np.array
+            # TODO: Handle cases where not all features are present (i.e. discard this version)
             for feature_value in version.feature_values:
+                # TODO: Implement a filter, where one can in/exclude features (via config)
                 pass # TODO: build dataset array
-
-
 
     session.close()
     return dataset

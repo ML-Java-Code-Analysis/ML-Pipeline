@@ -32,6 +32,13 @@ def main():
     if learn_dataset is None:
         pass    #TODO: handle
 
+    test_dataset = Dataset.get_dataset_from_range(
+        Config.repository_name,
+        Config.dataset_test_start,
+        Config.dataset_test_end)
+    if test_dataset is None:
+        pass  # TODO: handle
+
     # TODO: Read their features into an array
     # TODO: Feed the array to the ML Machine
     # TODO: Test on the Test Set

@@ -36,6 +36,9 @@ def read_config(config_file):
         _read_option(config, database_section, 'user_password')
         _read_option(config, database_section, 'host')
         _read_option(config, database_section, 'port')
+    else:
+        raise ConfigError(
+            '%s Section not found in Config file. Database information must be provided.' % database_section)
 
     logging_section = 'LOGGING'
     if config.has_section(logging_section):
@@ -44,9 +47,6 @@ def read_config(config_file):
         _read_option(config, logging_section, 'override', value_type=TYPE_BOOLEAN)
         _read_option(config, logging_section, 'format')
         _read_option(config, logging_section, 'date_format')
-    else:
-        raise ValueError(
-            '%s Section not found in Config file. Database information must be provided.' % database_section)
 
 
 TYPE_STRING = 1

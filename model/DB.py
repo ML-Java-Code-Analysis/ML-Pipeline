@@ -77,7 +77,7 @@ def create_db():
 
     engine = __get_engine()
     if engine is None:
-        Log.error("DB Engine could not be created! DB init failed!")
+        raise DBError("Engine could not be created.")
     else:
         Base().base.metadata.create_all(engine)
 
@@ -93,3 +93,11 @@ def create_session():
         logging.error("Could not create a session!")
 
     return new_session
+
+
+class DBError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)

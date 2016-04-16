@@ -4,16 +4,31 @@ import logging
 import argparse
 
 from model import DB
+from model.DB import DBError
 from utils import Config
+from utils.Config import ConfigError
 
 
 def main():
     cli_args = parse_arguments()
-    Config.read_config(cli_args.config_file)
+    try:
+        Config.read_config(cli_args.config_file)
+    except ConfigError:
+        logging.critical("Config File %s could not be read correctly! " % cli_args.config_file)
+        die()
     init_logging()
-    DB.create_db()
+    try:
+        DB.create_db()
+    except DBError:
+        logging.critical("DB Model could not be created!")
+        die()
 
     logging.info("All done. Exiting ML Pipeline")
+
+
+def die():
+    logging.critical("Something went horribly wrong. Exiting ML Pipeline")
+    exit()
 
 
 def parse_arguments():

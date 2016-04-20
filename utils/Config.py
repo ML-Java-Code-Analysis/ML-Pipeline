@@ -22,8 +22,8 @@ logging_date_format = '%Y.%m.%d %H:%M:%S'
 repository_name = None
 
 # Dataset options
-dataset_learn_start = None
-dataset_learn_end = None
+dataset_train_start = None
+dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
 
@@ -67,8 +67,8 @@ def read_config(config_file):
 
     dataset_section = 'DATASET'
     if config.has_section(dataset_section):
-        _read_option(config, dataset_section, 'learn_start', value_type=TYPE_DATE)
-        _read_option(config, dataset_section, 'learn_end', value_type=TYPE_DATE)
+        _read_option(config, dataset_section, 'train_start', value_type=TYPE_DATE)
+        _read_option(config, dataset_section, 'train_end', value_type=TYPE_DATE)
         _read_option(config, dataset_section, 'test_start', value_type=TYPE_DATE)
         _read_option(config, dataset_section, 'test_end', value_type=TYPE_DATE)
 

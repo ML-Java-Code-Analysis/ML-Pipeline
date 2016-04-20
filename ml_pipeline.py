@@ -25,12 +25,12 @@ def main():
         die()
 
     # TODO: Get all(?) Versions in a certain range from the DB (maybe separate learn/test)
-    learn_dataset = Dataset.get_dataset_from_range(
+    train_dataset = Dataset.get_dataset_from_range(
         Config.repository_name,
-        Config.dataset_learn_start,
-        Config.dataset_learn_end)
-    if learn_dataset is None:
-        pass    #TODO: handle
+        Config.dataset_train_start,
+        Config.dataset_train_end)
+    if train_dataset is None:
+        pass  # TODO: handle
 
     test_dataset = Dataset.get_dataset_from_range(
         Config.repository_name,
@@ -39,7 +39,6 @@ def main():
     if test_dataset is None:
         pass  # TODO: handle
 
-    # TODO: Read their features into an array
     # TODO: Feed the array to the ML Machine
     # TODO: Test on the Test Set
     # TODO: Print score, some useful analytics and some fancy charts

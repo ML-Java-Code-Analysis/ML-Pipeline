@@ -11,6 +11,19 @@ from model.objects.Commit import Commit
 import numpy as np
 
 
+class Dataset:
+    def __init__(self, feature_count, version_count):
+        """" Initialize an empty dataset
+
+        Args:
+            feature_count: Amount of features. Equals the columns of the data matrix.
+            version_count: Amount of versions. Equals the rows of the data matrix and target vector.
+        """
+
+        self.data = np.zeros((version_count, feature_count))
+        self.target = np.zeros(version_count)
+
+
 def get_dataset_from_range(repository, start, end):
     """ Reads a dataset from a repository in a specific time range
 
@@ -38,20 +51,34 @@ def get_dataset_from_range(repository, start, end):
 
         commits = query.all()
     except:
-        logging.exception("Could not retrieve dataset from Repository %s in range %s to %s" % (repository.name, start, end))
+        logging.exception(
+            "Could not retrieve dataset from Repository %s in range %s to %s" % (repository.name, start, end))
         return None
-    logging.debug("%s commits found. Creating Dataset Array" % len(commits))
+
+    version_count = 0
+    for commit in commits:
+        version_count += len(commit.versions)
+    logging.debug("%i commits with %i versions found." % (len(commits), version_count))
 
     # TODO: Maybe determine size of Feature matrix beforehand and initialize it
-
+    # TODO: It's suuuuper slow.... maybe output a progression
+    dataset = None
+    i = 0
     for commit in commits:
         for version in commit.versions:
-            np.array
+            if dataset is None:
+                dataset = Dataset(len(version.feature_values), version_count)
+
             # TODO: Handle cases where not all features are present (i.e. discard this version)
+            # TODO: make target configurable
+            dataset.target[i] = version.upcoming_bugs[0].sixmonth_bugs
+            j = 0
             for feature_value in version.feature_values:
                 # TODO: Implement a filter, where one can in/exclude features (via config)
-                pass # TODO: build dataset array
-
+                dataset.data[i][j] = feature_value.value()
+                j += 1
+            i += 1
+    print(dataset)
     session.close()
     return dataset
 

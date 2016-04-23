@@ -7,6 +7,10 @@ from model.objects.Base import Base
 
 Base = Base().base
 
+TARGET_BUGS_MONTH = 'month'
+TARGET_BUGS_SIXMONTHS = 'sixmonths'
+TARGET_BUGS_YEAR = 'year'
+
 
 class UpcomingBugsForVersion(Base):
     __tablename__ = 'upcoming_bugs_for_versions_mv'
@@ -19,3 +23,11 @@ class UpcomingBugsForVersion(Base):
     month_bugs = Column(Integer, nullable=False)
     sixmonth_bugs = Column(Integer, nullable=False)
     year_bugs = Column(Integer, nullable=False)
+
+    def get_target(self, target):
+        if target == TARGET_BUGS_MONTH:
+            return self.month_bugs
+        elif target == TARGET_BUGS_SIXMONTHS:
+            return self.sixmonth_bugs
+        elif target == TARGET_BUGS_YEAR:
+            return self.year_bugs

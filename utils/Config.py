@@ -22,10 +22,12 @@ logging_date_format = '%Y.%m.%d %H:%M:%S'
 repository_name = None
 
 # Dataset options
+dataset_target = None
 dataset_train_start = None
 dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
+dataset_features = None
 
 
 def read_config(config_file):
@@ -39,44 +41,37 @@ def read_config(config_file):
     config.read(config_file)
 
     database_section = 'DATABASE'
-    if config.has_section(database_section):
-        _read_option(config, database_section, 'dialect', optional=False)
-        _read_option(config, database_section, 'name', optional=False)
-        _read_option(config, database_section, 'user')
-        _read_option(config, database_section, 'user_password')
-        _read_option(config, database_section, 'host')
-        _read_option(config, database_section, 'port')
-    else:
-        raise ConfigError(
-            '%s Section not found in Config file. Database information must be provided.' % database_section)
+    _read_option(config, database_section, 'dialect', optional=False)
+    _read_option(config, database_section, 'name', optional=False)
+    _read_option(config, database_section, 'user')
+    _read_option(config, database_section, 'user_password')
+    _read_option(config, database_section, 'host')
+    _read_option(config, database_section, 'port')
 
     logging_section = 'LOGGING'
-    if config.has_section(logging_section):
-        _read_option(config, logging_section, 'level')
-        _read_option(config, logging_section, 'file')
-        _read_option(config, logging_section, 'override', value_type=TYPE_BOOLEAN)
-        _read_option(config, logging_section, 'format')
-        _read_option(config, logging_section, 'date_format')
+    _read_option(config, logging_section, 'level')
+    _read_option(config, logging_section, 'file')
+    _read_option(config, logging_section, 'override', value_type=TYPE_BOOLEAN)
+    _read_option(config, logging_section, 'format')
+    _read_option(config, logging_section, 'date_format')
 
     repository_section = 'REPOSITORY'
-    if config.has_section(repository_section):
-        _read_option(config, repository_section, 'name', optional=False)
-    else:
-        raise ConfigError(
-            '%s Section not found in Config file. Repository information must be provided.' % repository_section)
+    _read_option(config, repository_section, 'name', optional=False)
 
     dataset_section = 'DATASET'
-    if config.has_section(dataset_section):
-        _read_option(config, dataset_section, 'train_start', value_type=TYPE_DATE)
-        _read_option(config, dataset_section, 'train_end', value_type=TYPE_DATE)
-        _read_option(config, dataset_section, 'test_start', value_type=TYPE_DATE)
-        _read_option(config, dataset_section, 'test_end', value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'target', optional=False)
+    _read_option(config, dataset_section, 'train_start', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_LIST)
 
 TYPE_STRING = 1
 TYPE_INT = 2
 TYPE_FLOAT = 3
 TYPE_BOOLEAN = 4
 TYPE_DATE = 5
+TYPE_LIST = 6
 
 
 def _read_option(config, section, option, value_type=TYPE_STRING, target=None, optional=True, date_format='%Y.%m.%d'):
@@ -105,6 +100,9 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
         elif value_type == TYPE_DATE:
             value = config.get(section, option)
             value = datetime.strptime(value, date_format)
+        elif value_type == TYPE_LIST:
+            value = config.get(section, option)
+            value = [item.strip() for item in value.split(',')]
         else:
             raise ValueError("No valid Type provided")
 
@@ -118,6 +116,9 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
 
         globals()[target_name] = value
     elif not optional:
+        if not config.has_section(section):
+            raise ConfigError(
+                'Obligatory section %s not found in Config file.' % section)
         raise ConfigError("Obligatory option %s not found in section %s" % (option, section))
 
 

@@ -15,14 +15,12 @@ def main():
     try:
         Config.read_config(cli_args.config_file)
     except ConfigError:
-        logging.critical("Config File %s could not be read correctly! " % cli_args.config_file)
-        die()
+        die("Config File %s could not be read correctly! " % cli_args.config_file)
     init_logging()
     try:
         DB.init_db()
     except DBError:
-        logging.critical("DB Model could not be created!")
-        die()
+        die("DB Model could not be created!")
 
     # TODO: Get all(?) Versions in a certain range from the DB (maybe separate learn/test)
     train_dataset = Dataset.get_dataset_from_range(
@@ -30,14 +28,14 @@ def main():
         Config.dataset_train_start,
         Config.dataset_train_end)
     if train_dataset is None:
-        pass  # TODO: handle
+        die("Training Dataset could not be created!")
 
     test_dataset = Dataset.get_dataset_from_range(
         Config.repository_name,
         Config.dataset_test_start,
         Config.dataset_test_end)
     if test_dataset is None:
-        pass  # TODO: handle
+        die("Test Dataset could not be created!")
 
     # TODO: Feed the array to the ML Machine
     # TODO: Test on the Test Set
@@ -47,7 +45,9 @@ def main():
     logging.info("All done. Exiting ML Pipeline")
 
 
-def die():
+def die(message=None):
+    if message:
+        logging.critical(message)
     logging.critical("Something went horribly wrong. Exiting ML Pipeline")
     exit()
 

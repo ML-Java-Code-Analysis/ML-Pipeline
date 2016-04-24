@@ -29,6 +29,9 @@ dataset_test_start = None
 dataset_test_end = None
 dataset_features = None
 
+# Machine learning options
+ml_model = None
+
 
 def read_config(config_file):
     """ Reads the config file and initializes the config variables.
@@ -65,6 +68,10 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_LIST)
+
+    dataset_section = "ML"
+    _read_option(config, dataset_section, 'model', optional=False)
+
 
 TYPE_STRING = 1
 TYPE_INT = 2

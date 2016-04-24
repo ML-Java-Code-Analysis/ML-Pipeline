@@ -3,7 +3,7 @@
 import logging
 import argparse
 
-from ml import Dataset
+from ml import Dataset, Learner
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -37,7 +37,9 @@ def main():
     if test_dataset is None:
         die("Test Dataset could not be created!")
 
-    # TODO: Feed the array to the ML Machine
+    model = Learner.train_model(Config.ml_model, train_dataset)
+    print(model.coef_)
+
     # TODO: Test on the Test Set
     # TODO: Print score, some useful analytics and some fancy charts
     # TODO: Maybe save classifier?

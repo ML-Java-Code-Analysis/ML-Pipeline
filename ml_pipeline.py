@@ -3,7 +3,7 @@
 import logging
 import argparse
 
-from ml import Dataset, Learner
+from ml import Dataset, Model
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -17,12 +17,14 @@ def main():
     except ConfigError:
         die("Config File %s could not be read correctly! " % cli_args.config_file)
     init_logging()
+    logging.info("Starting ML Pipeline!")
+    logging.info("Initializing Database")
     try:
         DB.init_db()
     except DBError:
         die("DB Model could not be created!")
 
-    # TODO: Get all(?) Versions in a certain range from the DB (maybe separate learn/test)
+    logging.info("Reading training dataset")
     train_dataset = Dataset.get_dataset_from_range(
         Config.repository_name,
         Config.dataset_train_start,
@@ -30,6 +32,7 @@ def main():
     if train_dataset is None:
         die("Training Dataset could not be created!")
 
+    logging.info("Reading test dataset")
     test_dataset = Dataset.get_dataset_from_range(
         Config.repository_name,
         Config.dataset_test_start,
@@ -37,10 +40,18 @@ def main():
     if test_dataset is None:
         die("Test Dataset could not be created!")
 
-    model = Learner.train_model(Config.ml_model, train_dataset)
-    print(model.coef_)
+    logging.info("Creating and training model with training dataset")
+    model = Model.create_model(
+        Config.ml_model,
+        normalize=Config.ml_normalize
+    )
+    Model.train_model(model, train_dataset)
+    logging.info("Model successfully trained.")
+    logging.debug("Model coefficients: " + str(model.coef_))
 
-    # TODO: Test on the Test Set
+    logging.info("Testing model with test dataset")
+    Model.test_model(model, test_dataset)
+
     # TODO: Print score, some useful analytics and some fancy charts
     # TODO: Maybe save classifier?
 

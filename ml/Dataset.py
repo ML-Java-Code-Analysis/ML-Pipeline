@@ -16,7 +16,12 @@ from utils import Config
 
 class Dataset:
     def __init__(self, feature_count, version_count):
-        """" Initialize an empty dataset
+        """" Initialize an empty dataset.
+
+        A dataset consists of two components:
+        - The data attribute is a matrix containing all input data. It's size is version_count x feature_count.
+            Each row of the data matrix represents the feature vector of one version.
+        - The target attribute is a vector containing the ground truth. It's size is version_count.
 
         Args:
             feature_count: Amount of features. Equals the columns of the data matrix.

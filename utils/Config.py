@@ -31,6 +31,7 @@ dataset_features = None
 
 # Machine learning options
 ml_model = None
+ml_normalize = False
 
 
 def read_config(config_file):
@@ -71,6 +72,7 @@ def read_config(config_file):
 
     dataset_section = "ML"
     _read_option(config, dataset_section, 'model', optional=False)
+    _read_option(config, dataset_section, 'normalize', value_type=TYPE_BOOLEAN)
 
 
 TYPE_STRING = 1

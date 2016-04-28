@@ -22,6 +22,8 @@ logging_date_format = '%Y.%m.%d %H:%M:%S'
 repository_name = None
 
 # Dataset options
+dataset_cache = False
+dataset_cache_dir = None
 dataset_target = None
 dataset_train_start = None
 dataset_train_end = None
@@ -63,6 +65,8 @@ def read_config(config_file):
     _read_option(config, repository_section, 'name', optional=False)
 
     dataset_section = 'DATASET'
+    _read_option(config, dataset_section, 'cache', value_type=TYPE_BOOLEAN)
+    _read_option(config, dataset_section, 'cache_dir', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'target', optional=False)
     _read_option(config, dataset_section, 'train_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)

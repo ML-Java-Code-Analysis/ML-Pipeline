@@ -25,18 +25,26 @@ def main():
         die("DB Model could not be created!")
 
     logging.info("Reading training dataset")
-    train_dataset = Dataset.get_dataset_from_range(
+    train_dataset = Dataset.get_dataset(
         Config.repository_name,
         Config.dataset_train_start,
-        Config.dataset_train_end)
+        Config.dataset_train_end,
+        Config.dataset_features,
+        Config.dataset_target,
+        label="Training",
+        cache=Config.dataset_cache)
     if train_dataset is None:
         die("Training Dataset could not be created!")
 
     logging.info("Reading test dataset")
-    test_dataset = Dataset.get_dataset_from_range(
+    test_dataset = Dataset.get_dataset(
         Config.repository_name,
         Config.dataset_test_start,
-        Config.dataset_test_end)
+        Config.dataset_test_end,
+        Config.dataset_features,
+        Config.dataset_target,
+        label="Test",
+        cache=Config.dataset_cache)
     if test_dataset is None:
         die("Test Dataset could not be created!")
 
@@ -50,7 +58,8 @@ def main():
     logging.debug("Model coefficients: " + str(model.coef_))
 
     logging.info("Testing model with test dataset")
-    Model.test_model(model, test_dataset)
+    report = Model.test_model(model, test_dataset)
+    print(report)
 
     # TODO: Print score, some useful analytics and some fancy charts
     # TODO: Maybe save classifier?

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # coding=utf-8
+import hashlib
 import logging
 import os
 from datetime import datetime
@@ -10,7 +11,6 @@ from sqlalchemy.orm import joinedload
 from model import DB
 from model.objects.Commit import Commit
 from model.objects.Repository import Repository
-import hashlib
 
 
 class Dataset:
@@ -26,8 +26,10 @@ class Dataset:
             feature_count (int): Amount of features. Equals the columns of the data matrix.
             version_count (int): Amount of versions. Equals the rows of the data matrix and target vector.
             feature_list (List[str]): A list of Feature IDs. Must be in the same order as they are in the dataset.
+            target_id (str): ID of the target which is used in this dataset. E.g. 'month'
             start (datetime): Start of the date range contained in this dataset.
             end (datetime): End of the date range contained in this dataset.
+            label (str): An arbitrary label, e.g. "Test", for this dataset. Useful when caching!
         """
         logging.debug("Initializing Dataset with %i features and %i versions." % (feature_count, version_count))
         self.data = np.zeros((version_count, feature_count))
@@ -40,12 +42,23 @@ class Dataset:
 
 
 def get_dataset(repository, start, end, feature_list, target_id, label="", cache=False, cache_directory=None):
-    """ Reads a dataset from a repository in a specific time range
+    """ Reads a dataset from a repository in a specific time range.
+
+    If cache=True, the dataset will be read from a file, if one exists. If not, after reading from the DB, it will
+    be saved to a *.dataset file.
 
     Args:
         repository (Repository): The repository to query. Can also be its name as a string
-        start (datetime): The start range
-        end (datetime): The end range
+        start (datetime): The start range for the dataset
+        end (datetime): The end range for the dataset
+        feature_list (list[str]): A list of the feature-IDs to be read into the dataset.
+        target_id (str): The ID of the target. Use a TARGET_X constant from UpcomingBugsForVersion
+        label (str): The label to be assigned to the dataset.
+        cache (bool): If True, caching will be used.
+        cache_directory (bool): Optional. The directory path for the cache files. If None, the working dir will be used.
+
+    Returns:
+        Dataset: The populated dataset.
     """
     if cache and not cache_directory:
         cache_directory = os.getcwd()
@@ -69,6 +82,12 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, label="
         repository (Repository): The repository to query. Can also be its name as a string
         start (datetime): The start range
         end (datetime): The end range
+        feature_list (list[str]): A list of the feature-IDs to be read into the dataset.
+        target_id (str): The ID of the target. Use a TARGET_X constant from UpcomingBugsForVersion
+        label (str): The label to be assigned to the dataset.
+
+    Returns:
+        Dataset: The populated dataset.
     """
     """if cache:
         if not cache_directory:
@@ -133,7 +152,7 @@ def get_repository_by_name(session, name):
         name (str): The name of the repository
 
     Returns:
-        (Repository) the repository if it was found, or None
+        Repository: the repository if it was found, or None
     """
     repository = None
     logging.debug("Retrieving repository with name '%s'" % name)
@@ -155,7 +174,7 @@ def get_commits_in_range(session, repository, start, end):
         end (datetime): The latest commit to retrieve.
 
     Returns:
-        (List[Commit]) A list of commits. None, if something went wrong.
+        List[Commit] A list of commits. None, if something went wrong.
     """
     assert start < end, "The range start must be before the range end!"
     logging.debug("Querying for Commits in repository with id %s and between %s and %s" % (repository.id, start, end))
@@ -178,6 +197,7 @@ def get_commits_in_range(session, repository, start, end):
 
 
 def hash_features(feature_list):
+    """ Computes a hash string from a list of feature-IDs. """
     m = hashlib.md5()
     for feature in feature_list:
         m.update(feature.encode('utf8'))
@@ -185,11 +205,13 @@ def hash_features(feature_list):
 
 
 def generate_filename_for_dataset(dataset, strftime_format="%Y_%m_%d"):
+    """ Generates the filename to cache a dataset. """
     return generate_filename(dataset.label, dataset.feature_list, dataset.target_id, dataset.start, dataset.end,
                              strftime_format)
 
 
 def generate_filename(label, feature_list, target_id, start, end, strftime_format="%Y_%m_%d"):
+    """ Generates the filename to cache a dataset. """
     feature_hash = hash_features(feature_list)
     start_str = start.strftime(strftime_format)
     end_str = end.strftime(strftime_format)
@@ -197,24 +219,17 @@ def generate_filename(label, feature_list, target_id, start, end, strftime_forma
 
 
 def get_file_header(dataset):
+    """ Generates the file header to be used in the cache file. """
     return ",".join(dataset.feature_list)
 
 
-def read_file_header(header, strftime_format="%y_%m_%d"):
-    """
+def save_dataset_file(dataset, directory):
+    """ Cache a dataset into a file.
 
     Args:
-        header (str):
-        strftime_format (str):
+        dataset (Dataset): The dataset to save.
+        directory (str): The directory to save it to.
     """
-    fragments = header.split("\n")
-    start = datetime.strptime(fragments[0], strftime_format)
-    end = datetime.strptime(fragments[1], strftime_format)
-    feature_list = fragments[2].split(",")
-    return start, end, feature_list
-
-
-def save_dataset_file(dataset, directory):
     filepath = os.path.join(directory, generate_filename_for_dataset(dataset))
     header = get_file_header(dataset)
     concatenated_array = np.concatenate((dataset.data, dataset.target[np.newaxis].T), axis=1)
@@ -225,6 +240,20 @@ def save_dataset_file(dataset, directory):
 
 
 def load_dataset_file(directory, label, feature_list, target_id, start, end, strftime_format="%Y_%m_%d"):
+    """ Load a dataset from a cache file.
+
+    Args:
+        directory (str): The directory in which the file should be located.
+        label (str): The label for the dataset.
+        feature_list (list[str]): The list of feature-IDs the dataset should contain.
+        target_id (str): The ID of the target the dataset should contain.
+        start (datetime): The start of the range the dataset should contain.
+        end (datetime): The end of the range the dataset should contain.
+        strftime_format (str): Optional. The datetime string format.
+
+    Returns:
+        Dataset: The dataset, if one was retrieved. Otherwise None.
+    """
     filename = generate_filename(label, feature_list, target_id, start, end, strftime_format)
     filepath = os.path.join(directory, filename)
     logging.debug("Attempting to load cached dataset from %s" % filepath)

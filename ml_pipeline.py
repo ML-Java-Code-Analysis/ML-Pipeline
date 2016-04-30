@@ -3,7 +3,7 @@
 import logging
 import argparse
 
-from ml import Dataset, Model
+from ml import Dataset, Model, Predict
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -57,10 +57,18 @@ def main():
     logging.info("Model successfully trained.")
     logging.debug("Model coefficients: " + str(model.coef_))
 
+    mean_prediction = Predict.predict_mean(train_dataset, 20)
+    print("Mean pred: " + str(mean_prediction))
+    med_prediction = Predict.predict_median(train_dataset, 20)
+    print("Median pred: " + str(med_prediction))
+    wr_prediction = Predict.predict_weighted_random(train_dataset, 2000)
+    print("Weighted random pred: " + str(wr_prediction))
+
+    """
     logging.info("Testing model with test dataset")
     report = Model.test_model(model, test_dataset)
     print(report)
-
+    """
     # TODO: Print score, some useful analytics and some fancy charts
     # TODO: Maybe save classifier?
 

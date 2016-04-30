@@ -3,7 +3,9 @@
 import logging
 
 from sklearn import linear_model
-from sklearn.metrics import explained_variance_score, mean_squared_error, mean_absolute_error, r2_score
+from sklearn import preprocessing
+
+from ml.Report import Report
 
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 
@@ -29,7 +31,7 @@ def create_model(model_type, normalize=False):
         raise ValueError("The model type %s is not supported." % model_type)
 
 
-def train_model(model, train_dataset):
+def train_model(model, train_dataset, polynomial_degree=1):
     """ Trains a model.
 
     Args:
@@ -42,6 +44,10 @@ def train_model(model, train_dataset):
     """
     if type(model) == str:
         model = create_model(model)
+    if polynomial_degree > 1:
+        logging.debug("Preprocessing: Generate polynomial features")
+        preprocessing.PolynomialFeatures(degree=polynomial_degree, )
+
     logging.debug("Fitting training set to model")
     model.fit(train_dataset.data, train_dataset.target)
     return model
@@ -55,18 +61,7 @@ def test_model(model, test_dataset):
         test_dataset (Dataset): The test dataset, including test input as well as target ground truth.
     """
     # logging.debug("Testing model with %s dataset" % test_dataset.size)
-    predicted = model.predict(test_dataset.data)
     target = test_dataset.target
+    predicted = model.predict(test_dataset.data)
 
-    evs = explained_variance_score(target, predicted)
-    mse = mean_squared_error(target, predicted)
-    mae = mean_absolute_error(target, predicted)
-    r2s = r2_score(target, predicted)
-
-    print("PREDICTED:\n" + str(predicted))
-    print("TARGET:\n" + str(target))
-    print("ABS DIFF:\n" + str(abs(predicted - target)))
-    print("Explained variance score:\t%f\t(Best is 1.0, lower is worse)" % evs)
-    print("Mean squared error:\t\t\t%f\t(Best is 0.0, higher is worse)" % mse)
-    print("Mean absolute error:\t\t%f\t(Best is 0.0, higher is worse)" % mae)
-    print("R2 Score:\t\t\t\t\t%f\t(Best is 1.0, lower is worse)" % r2s)
+    return Report(target, predicted)

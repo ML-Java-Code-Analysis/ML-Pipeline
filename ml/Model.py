@@ -8,6 +8,7 @@ from sklearn import preprocessing
 from ml.Report import Report
 
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
+MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 
 
 def create_model(model_type, normalize=False):
@@ -25,7 +26,15 @@ def create_model(model_type, normalize=False):
     if model_type == MODEL_TYPE_LINREG:
         return linear_model.LinearRegression(
             fit_intercept=True,
-            normalize=normalize
+            normalize=normalize,
+            copy_X=True,
+        )
+    elif model_type == MODEL_TYPE_RIDREG:
+        return linear_model.Ridge(
+            alpha=1,
+            fit_intercept=True,
+            normalize=normalize,
+            copy_X=True,
         )
     else:
         raise ValueError("The model type %s is not supported." % model_type)
@@ -52,7 +61,7 @@ def train_model(model, train_dataset, polynomial_degree=1):
     model.fit(train_dataset.data, train_dataset.target)
     return model
 
-
+'''
 def test_model(model, test_dataset):
     """ Test the trained model with the given dataset.
 
@@ -65,3 +74,4 @@ def test_model(model, test_dataset):
     predicted = model.predict(test_dataset.data)
 
     return Report(target, predicted)
+'''

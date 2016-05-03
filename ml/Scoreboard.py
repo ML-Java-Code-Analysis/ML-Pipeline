@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # coding=utf-8
 import os
+from operator import attrgetter
 
 from utils import Config
 
+# TODO: maybe make this configurable? Low prio.
 SCOREBOARD_FILE = 'scores.scoreboard'
 SEPARATOR = ";"
 FEATURE_SEPARATOR = ","
@@ -12,8 +14,9 @@ entries = set()
 
 
 class ScoreboardEntry:
-    def __init__(self, evs, mse, mae, mde, r2s, repository_name, ml_model, ml_normalize, dataset_target,
+    def __init__(self, label, evs, mse, mae, mde, r2s, repository_name, ml_model, ml_normalize, dataset_target,
                  dataset_train_start, dataset_train_end, dataset_test_start, dataset_test_end, dataset_features):
+        self.label = label
         self.evs = evs
         self.mse = mse
         self.mae = mae
@@ -38,9 +41,17 @@ class ScoreboardEntry:
         return hash(self) == hash(other)
 
 
-
 def create_entry_from_config(report):
+    """ Creates a new ScoreboardEntry Object from a report and the current Config state.
+
+    Args:
+        report (Report): The report to get the label and ratings from.
+
+    Returns:
+        ScoreboardEntry: A new ScoreboardEntry.
+    """
     return ScoreboardEntry(
+        report.label,
         report.evs,
         report.mse,
         report.mae,
@@ -59,6 +70,14 @@ def create_entry_from_config(report):
 
 
 def parse_entry_from_string(string):
+    """ Parses a string into a ScoreboardEntry.
+
+    Args:
+        string (str): The string representing a storeboard entry, the data separated by SEPARATOR.
+
+    Returns:
+        ScoreboardEntry: A new ScoreboardEntry.
+    """
     # find out how many arguments constructor needs, discard the rest
     argcount = ScoreboardEntry.__init__.__code__.co_argcount
     args = [fragment.strip() for fragment in string.split(SEPARATOR)]
@@ -69,7 +88,16 @@ def parse_entry_from_string(string):
 
 
 def parse_entry_to_string(scoreboard_entry):
+    """ Parses a ScoreboardEntry into a string representation of its data.
+
+    Args:
+        scoreboard_entry (ScoreboardEntry): The ScoreboardEntry object to parse.
+
+    Returns:
+        str: The string representation of the ScoreboardEntries data.
+    """
     return SEPARATOR.join([
+        str(scoreboard_entry.label),
         str(scoreboard_entry.evs),
         str(scoreboard_entry.mse),
         str(scoreboard_entry.mae),
@@ -86,18 +114,62 @@ def parse_entry_to_string(scoreboard_entry):
         FEATURE_SEPARATOR.join(scoreboard_entry.dataset_features)])
 
 
-def add_entry(entry):
-    global entries
+def read_entries():
+    """ Reads a list of scoreboard entries from the scoreboard file into the global variable entries """
     if os.path.isfile(SCOREBOARD_FILE):
         with open(SCOREBOARD_FILE, mode='r') as f:
             for line in f:
                 e = parse_entry_from_string(line)
-                print(hash(e))
                 entries.add(e)
+
+
+def add_entry(entry):
+    """ Add a new entry to the scoreboard.
+
+    Note that it won't be written to the scoreboard file before calling write_entries()
+
+    Args:
+        entry (ScoreboardEntry): The Scoreboard Entry to write.
+    """
+    global entries
+    if not entries:
+        read_entries()
     entries.add(entry)
 
 
 def write_entries():
+    """ Persist the current scoreboard entries into the scoreboard file """
     global entries
     with open(SCOREBOARD_FILE, mode='w') as f:
         f.writelines([parse_entry_to_string(entry) + "\n" for entry in entries])
+
+
+# Rating Attribute structure: (attribute_name, reverse_ordering)
+RATING_ATTRIBUTE_EVS = ("evs", False)
+RATING_ATTRIBUTE_MSE = ("mse", True)
+RATING_ATTRIBUTE_MAE = ("mae", True)
+RATING_ATTRIBUTE_MDE = ("mde", True)
+RATING_ATTRIBUTE_R2S = ("r2s", False)
+
+
+def get_ranking(entry, rating_attribute):
+    """ Get the ranking of an entry in the current scoreboard, according to a specific attribute.
+
+    Args:
+        entry (ScoreboardEntry): The scoreboard entry to get the ranking of.
+        rating_attribute (tuple(str, bool)): The attribute by which to rank the entries.
+            Use one of the RATING_ATTRIBUT_X constants.
+
+    Returns:
+        int: The rank of the entry.
+    """
+    global entries
+    if not entries:
+        read_entries()
+
+    sorted_entries = sorted(
+        list(entries),
+        key=attrgetter(rating_attribute[0]),
+        reverse=rating_attribute[1]
+    )
+    return sorted_entries.index(entry)

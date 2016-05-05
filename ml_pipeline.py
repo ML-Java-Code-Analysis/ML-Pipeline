@@ -2,8 +2,8 @@
 # coding=utf-8
 import logging
 import argparse
-
-from ml import Dataset, Model, Predict
+from ml import Dataset, Model, Predict, Scoreboard
+from ml.Report import Report
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -51,19 +51,45 @@ def main():
     logging.info("Creating and training model with training dataset")
     model = Model.create_model(
         Config.ml_model,
-        normalize=Config.ml_normalize
+        normalize=Config.ml_normalize,
+        alpha=Config.ml_alpha,
     )
     Model.train_model(model, train_dataset)
     logging.info("Model successfully trained.")
     logging.debug("Model coefficients: " + str(model.coef_))
+    print(model.score(test_dataset.data, test_dataset.target))
+    baseline_mean_prediction = Predict.predict_mean(train_dataset, test_dataset.target.shape[0])
+    baseline_med_prediction = Predict.predict_median(train_dataset, test_dataset.target.shape[0])
+    baseline_wr_prediction = Predict.predict_weighted_random(train_dataset, test_dataset.target.shape[0])
+    training_prediction = Predict.predict_with_model(train_dataset, model)
+    test_prediction = Predict.predict_with_model(test_dataset, model)
 
-    mean_prediction = Predict.predict_mean(train_dataset, 20)
-    print("Mean pred: " + str(mean_prediction))
-    med_prediction = Predict.predict_median(train_dataset, 20)
-    print("Median pred: " + str(med_prediction))
-    wr_prediction = Predict.predict_weighted_random(train_dataset, 2000)
-    print("Weighted random pred: " + str(wr_prediction))
+    baseline_mean_report = Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")
+    baseline_med_report = Report(test_dataset.target, baseline_med_prediction, "Median Baseline")
+    baseline_wr_report = Report(test_dataset.target, baseline_wr_prediction, "Weighted Random Baseline")
+    training_report = Report(train_dataset.target, training_prediction, "Training")
+    test_report = Report(test_dataset.target, test_prediction, "Test")
+    print(baseline_mean_report)
+    print(baseline_med_report)
+    print(baseline_wr_report)
+    print(training_report)
+    print(test_report)
 
+    # comparisation_table
+    # print(table.table)
+
+    entry = Scoreboard.create_entry_from_config(Report(test_dataset.target, baseline_mean_prediction))
+    Scoreboard.add_entry(entry)
+    Scoreboard.write_entries()
+    ranking = Scoreboard.get_ranking(entry, Scoreboard.RATING_ATTRIBUTE_R2S)
+    print("Ranking: %i" % ranking)
+
+    # TODO: Choose main score (R2)
+    # TODO: Choose main baseline (WR?)
+    # TODO: Compare baseline, training, test
+    # TODO: Display features with most weight
+    # TODO: If CV, show learning curve
+    # TODO: Show rank of run
     """
     logging.info("Testing model with test dataset")
     report = Model.test_model(model, test_dataset)

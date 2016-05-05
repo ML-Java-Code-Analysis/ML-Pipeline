@@ -79,6 +79,9 @@ def main():
         [baseline_wr_report, training_report, test_report])
     print(comparisation_table.table)
 
+    top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
+    print(top_features_table.table)
+
     base_entry = Scoreboard.create_entry_from_config(baseline_wr_report)
     test_entry = Scoreboard.create_entry_from_config(test_report)
     Scoreboard.add_entry(base_entry)
@@ -89,16 +92,7 @@ def main():
     print("Base ranking: %i" % base_ranking)
     print("Test ranking: %i" % test_ranking)
 
-    # TODO: Display features with most weight
     # TODO: If CV, show learning curve
-    # TODO: Show rank of run
-    """
-    logging.info("Testing model with test dataset")
-    report = Model.test_model(model, test_dataset)
-    print(report)
-    """
-    # TODO: Print score, some useful analytics and some fancy charts
-    # TODO: Maybe save classifier?
 
     logging.info("All done. Exiting ML Pipeline")
 

@@ -77,15 +77,6 @@ def _format_float(float_value):
     return "% .4f" % float_value
 
 
-def get_report_comparisation_table(reports, score_attr):
-    compare_table = [
-        [report.label for report in reports],
-        [_format_float(getattr(report, score_attr)) for report in reports]
-    ]
-    table = Table(compare_table)
-    table.title = _score_attr_to_string(score_attr) + " comparisation"
-
-
 def get_metrics(ground_truth, predicted):
     """ Calculate all metrics at once.
 
@@ -186,3 +177,38 @@ def get_r2_score(ground_truth, predicted):
         float: The calculated value.
     """
     return r2_score(ground_truth, predicted)
+
+
+def get_report_comparisation_table(reports, score_attrs=SCORE_R2S):
+    """ Returns a formatted table which compares a list of reports by one or more attributes.
+
+    Args:
+        reports (list[Report]): The reports to compare
+        score_attrs (list[str]|str): The attribute (or list of attributes) to compare. Use the SCORE_X constants.
+
+    Returns:
+        (Table): A table with the data.
+    """
+    if type(score_attrs) != list:
+        score_attrs = [score_attrs]
+    multiple_attrs = len(score_attrs) > 1
+
+    headers = []
+    if multiple_attrs:
+        headers += [""]
+    headers += [report.label for report in reports]
+
+    compare_table = [headers]
+    for score_attr in score_attrs:
+        values = []
+        if multiple_attrs:
+            values.append(score_attr)
+        values += [_format_float(getattr(report, score_attr)) for report in reports]
+        compare_table.append(values)
+    table = Table(compare_table)
+
+    if multiple_attrs:
+        table.title = "Comparisation"
+    else:
+        table.title = _score_attr_to_string(score_attrs[0]) + " comparisation"
+    return table

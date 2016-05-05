@@ -5,7 +5,7 @@ import logging
 from sklearn import linear_model
 from sklearn import preprocessing
 
-from ml.Report import Report
+from ml.Reporting import Report
 
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'

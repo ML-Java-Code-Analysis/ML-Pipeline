@@ -3,7 +3,7 @@
 import logging
 import argparse
 from ml import Dataset, Model, Predict, Scoreboard
-from ml.Report import Report
+from ml import Reporting
 from model import DB
 from model.DB import DBError
 from utils import Config
@@ -64,29 +64,31 @@ def main():
     training_prediction = Predict.predict_with_model(train_dataset, model)
     test_prediction = Predict.predict_with_model(test_dataset, model)
 
-    baseline_mean_report = Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")
-    baseline_med_report = Report(test_dataset.target, baseline_med_prediction, "Median Baseline")
-    baseline_wr_report = Report(test_dataset.target, baseline_wr_prediction, "Weighted Random Baseline")
-    training_report = Report(train_dataset.target, training_prediction, "Training")
-    test_report = Report(test_dataset.target, test_prediction, "Test")
+    baseline_mean_report = Reporting.Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")
+    baseline_med_report = Reporting.Report(test_dataset.target, baseline_med_prediction, "Median Baseline")
+    baseline_wr_report = Reporting.Report(test_dataset.target, baseline_wr_prediction, "Weighted Random Baseline")
+    training_report = Reporting.Report(train_dataset.target, training_prediction, "Training")
+    test_report = Reporting.Report(test_dataset.target, test_prediction, "Test")
     print(baseline_mean_report)
     print(baseline_med_report)
     print(baseline_wr_report)
     print(training_report)
     print(test_report)
 
-    # comparisation_table
-    # print(table.table)
+    comparisation_table = Reporting.get_report_comparisation_table(
+        [baseline_wr_report, training_report, test_report])
+    print(comparisation_table.table)
 
-    entry = Scoreboard.create_entry_from_config(Report(test_dataset.target, baseline_mean_prediction))
-    Scoreboard.add_entry(entry)
+    base_entry = Scoreboard.create_entry_from_config(baseline_wr_report)
+    test_entry = Scoreboard.create_entry_from_config(test_report)
+    Scoreboard.add_entry(base_entry)
+    Scoreboard.add_entry(test_entry)
     Scoreboard.write_entries()
-    ranking = Scoreboard.get_ranking(entry, Scoreboard.RATING_ATTRIBUTE_R2S)
-    print("Ranking: %i" % ranking)
+    base_ranking = Scoreboard.get_ranking(base_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
+    test_ranking = Scoreboard.get_ranking(test_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
+    print("Base ranking: %i" % base_ranking)
+    print("Test ranking: %i" % test_ranking)
 
-    # TODO: Choose main score (R2)
-    # TODO: Choose main baseline (WR?)
-    # TODO: Compare baseline, training, test
     # TODO: Display features with most weight
     # TODO: If CV, show learning curve
     # TODO: Show rank of run

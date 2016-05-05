@@ -11,7 +11,7 @@ MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 
 
-def create_model(model_type, normalize=False):
+def create_model(model_type, normalize=False, alpha=None):
     """ Creates a new model of the specified type.
 
     Args:
@@ -31,7 +31,7 @@ def create_model(model_type, normalize=False):
         )
     elif model_type == MODEL_TYPE_RIDREG:
         return linear_model.Ridge(
-            alpha=1,
+            alpha=alpha,
             fit_intercept=True,
             normalize=normalize,
             copy_X=True,

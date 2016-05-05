@@ -14,8 +14,9 @@ entries = set()
 
 
 class ScoreboardEntry:
-    def __init__(self, label, evs, mse, mae, mde, r2s, repository_name, ml_model, ml_normalize, dataset_target,
-                 dataset_train_start, dataset_train_end, dataset_test_start, dataset_test_end, dataset_features):
+    def __init__(self, label, evs, mse, mae, mde, r2s, repository_name, ml_model, ml_normalize, ml_polynomial_degree,
+                 dataset_target, dataset_train_start, dataset_train_end, dataset_test_start, dataset_test_end,
+                 dataset_features):
         self.label = label
         self.evs = evs
         self.mse = mse
@@ -25,6 +26,7 @@ class ScoreboardEntry:
         self.repository_name = repository_name
         self.ml_model = ml_model
         self.ml_normalize = ml_normalize
+        self.ml_polynomial_degree = ml_polynomial_degree
         self.dataset_target = dataset_target
         self.dataset_train_start = dataset_train_start
         self.dataset_train_end = dataset_train_end
@@ -60,6 +62,7 @@ def create_entry_from_config(report):
         Config.repository_name,
         Config.ml_model,
         Config.ml_normalize,
+        Config.ml_polynomial_degree,
         Config.dataset_target,
         Config.dataset_train_start,
         Config.dataset_train_end,
@@ -106,6 +109,7 @@ def parse_entry_to_string(scoreboard_entry):
         str(scoreboard_entry.repository_name),
         str(scoreboard_entry.ml_model),
         str(scoreboard_entry.ml_normalize),
+        str(scoreboard_entry.ml_polynomial_degree),
         str(scoreboard_entry.dataset_target),
         str(scoreboard_entry.dataset_train_start),
         str(scoreboard_entry.dataset_train_end),

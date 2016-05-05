@@ -5,6 +5,7 @@ import logging
 from sklearn import linear_model
 from sklearn import preprocessing
 
+from ml import Preprocessing
 from ml.Reporting import Report
 
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
@@ -17,6 +18,7 @@ def create_model(model_type, normalize=False, alpha=None):
     Args:
         model_type (str): The type of model to create. Use one of the MODEL_TYPE_X constants.
         normalize (bool): If normalization is to be used.
+        alpha (float): The regularization parameter. Will only be used if applicable to the model type.
 
     Returns:
         (LinearModel) The model instance.
@@ -47,31 +49,14 @@ def train_model(model, train_dataset, polynomial_degree=1):
         model (str|LinearModel): Model instance or string identifying the model type.
             If the latter, use of the MODEL_TYPE_X constants.
         train_dataset (Dataset): The dataset to train the model with.
-
+        polynomial_degree (int): If higher than 1, polynomial features will be used.
     Returns:
         (LinearModel) The model instance.
     """
+    assert polynomial_degree > 0, "Polynomial degree must be higher than 0!"
     if type(model) == str:
         model = create_model(model)
-    if polynomial_degree > 1:
-        logging.debug("Preprocessing: Generate polynomial features")
-        preprocessing.PolynomialFeatures(degree=polynomial_degree, )
-
+    data = Preprocessing.preprocess(train_dataset, polynomial_degree=polynomial_degree)
     logging.debug("Fitting training set to model")
-    model.fit(train_dataset.data, train_dataset.target)
+    model.fit(data, train_dataset.target)
     return model
-
-'''
-def test_model(model, test_dataset):
-    """ Test the trained model with the given dataset.
-
-    Args:
-        model (LinearModel): A trained Model instance.
-        test_dataset (Dataset): The test dataset, including test input as well as target ground truth.
-    """
-    # logging.debug("Testing model with %s dataset" % test_dataset.size)
-    target = test_dataset.target
-    predicted = model.predict(test_dataset.data)
-
-    return Report(target, predicted)
-'''

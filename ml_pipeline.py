@@ -54,33 +54,35 @@ def main():
         normalize=Config.ml_normalize,
         alpha=Config.ml_alpha,
     )
-    Model.train_model(model, train_dataset)
+
+    Model.train_model(
+        model,
+        train_dataset,
+        polynomial_degree=Config.ml_polynomial_degree
+    )
+
     logging.info("Model successfully trained.")
     logging.debug("Model coefficients: " + str(model.coef_))
-    print(model.score(test_dataset.data, test_dataset.target))
+
+    logging.debug("Creating predictions...")
     baseline_mean_prediction = Predict.predict_mean(train_dataset, test_dataset.target.shape[0])
     baseline_med_prediction = Predict.predict_median(train_dataset, test_dataset.target.shape[0])
     baseline_wr_prediction = Predict.predict_weighted_random(train_dataset, test_dataset.target.shape[0])
-    training_prediction = Predict.predict_with_model(train_dataset, model)
-    test_prediction = Predict.predict_with_model(test_dataset, model)
+    training_prediction = Predict.predict_with_model(
+        train_dataset,
+        model,
+        polynomial_degree=Config.ml_polynomial_degree)
+    test_prediction = Predict.predict_with_model(
+        test_dataset,
+        model,
+        polynomial_degree=Config.ml_polynomial_degree)
 
+    logging.debug("Creating reports from predictions")
     baseline_mean_report = Reporting.Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")
     baseline_med_report = Reporting.Report(test_dataset.target, baseline_med_prediction, "Median Baseline")
     baseline_wr_report = Reporting.Report(test_dataset.target, baseline_wr_prediction, "Weighted Random Baseline")
     training_report = Reporting.Report(train_dataset.target, training_prediction, "Training")
     test_report = Reporting.Report(test_dataset.target, test_prediction, "Test")
-    print(baseline_mean_report)
-    print(baseline_med_report)
-    print(baseline_wr_report)
-    print(training_report)
-    print(test_report)
-
-    comparisation_table = Reporting.get_report_comparisation_table(
-        [baseline_wr_report, training_report, test_report])
-    print(comparisation_table.table)
-
-    top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
-    print(top_features_table.table)
 
     base_entry = Scoreboard.create_entry_from_config(baseline_wr_report)
     test_entry = Scoreboard.create_entry_from_config(test_report)
@@ -89,8 +91,26 @@ def main():
     Scoreboard.write_entries()
     base_ranking = Scoreboard.get_ranking(base_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
     test_ranking = Scoreboard.get_ranking(test_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
-    print("Base ranking: %i" % base_ranking)
-    print("Test ranking: %i" % test_ranking)
+
+    if Config.reporting_display:
+        print(baseline_mean_report)
+        print(baseline_med_report)
+        print(baseline_wr_report)
+        print(training_report)
+        print(test_report)
+
+        comparisation_table = Reporting.get_report_comparisation_table(
+            [baseline_wr_report, training_report, test_report],
+            [Reporting.SCORE_R2S, Reporting.SCORE_MAE, Reporting.SCORE_MDE])
+        print(comparisation_table.table)
+
+        if Config.ml_polynomial_degree == 1:
+            # Determining top features only makes sense without polynomial features.
+            top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
+            print(top_features_table.table)
+
+        print("Base ranking: %i" % base_ranking)
+        print("Test ranking: %i" % test_ranking)
 
     # TODO: If CV, show learning curve
 

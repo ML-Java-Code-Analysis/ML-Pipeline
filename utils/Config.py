@@ -18,6 +18,9 @@ logging_override = True
 logging_format = '%(asctime)s [%(levelname)s] %(message)s'
 logging_date_format = '%Y.%m.%d %H:%M:%S'
 
+# Reporting options
+reporting_display = True
+
 # Repository options
 repository_name = None
 
@@ -63,6 +66,9 @@ def read_config(config_file):
     _read_option(config, logging_section, 'override', value_type=TYPE_BOOLEAN)
     _read_option(config, logging_section, 'format')
     _read_option(config, logging_section, 'date_format')
+
+    reporting_section = 'REPORTING'
+    _read_option(config, reporting_section, 'display_reports', target='reporting_display', value_type=TYPE_BOOLEAN)
 
     repository_section = 'REPOSITORY'
     _read_option(config, repository_section, 'name', optional=False)

@@ -18,11 +18,11 @@ class ScoreboardEntry:
                  dataset_target, dataset_train_start, dataset_train_end, dataset_test_start, dataset_test_end,
                  dataset_features):
         self.label = label
-        self.evs = evs
-        self.mse = mse
-        self.mae = mae
-        self.mde = mde
-        self.r2s = r2s
+        self.evs = float(evs)
+        self.mse = float(mse)
+        self.mae = float(mae)
+        self.mde = float(mde)
+        self.r2s = float(r2s)
         self.repository_name = repository_name
         self.ml_model = ml_model
         self.ml_normalize = ml_normalize
@@ -150,11 +150,11 @@ def write_entries():
 
 
 # Rating Attribute structure: (attribute_name, reverse_ordering)
-RATING_ATTRIBUTE_EVS = ("evs", False)
-RATING_ATTRIBUTE_MSE = ("mse", True)
-RATING_ATTRIBUTE_MAE = ("mae", True)
-RATING_ATTRIBUTE_MDE = ("mde", True)
-RATING_ATTRIBUTE_R2S = ("r2s", False)
+RATING_ATTRIBUTE_EVS = ("evs", True)
+RATING_ATTRIBUTE_MSE = ("mse", False)
+RATING_ATTRIBUTE_MAE = ("mae", False)
+RATING_ATTRIBUTE_MDE = ("mde", False)
+RATING_ATTRIBUTE_R2S = ("r2s", True)
 
 
 def get_ranking(entry, rating_attribute):

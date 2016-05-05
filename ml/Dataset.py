@@ -264,9 +264,9 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, str
 
         logging.debug(
             "Successfully retrieved data %s and target %s from cache file." % (str(data.shape), str(target.shape)))
-        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target, start, end, label)
+        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, label)
         dataset.data = data
-        dataset.target = target
+        dataset.target = target.T[0]
         return dataset
     logging.debug("Cached dataset not found.")
     return None

@@ -39,6 +39,7 @@ ml_model = None
 ml_normalize = False
 ml_alpha = None
 ml_cross_validation = None
+ml_kernel = 'rbf'
 ml_polynomial_degree = 1
 
 
@@ -88,6 +89,7 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'normalize', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'alpha', value_type=TYPE_FLOAT)
     _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_INT)
+    _read_option(config, dataset_section, 'kernel')
     _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
 
 

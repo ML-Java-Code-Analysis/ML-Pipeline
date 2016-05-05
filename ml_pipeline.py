@@ -53,6 +53,7 @@ def main():
         Config.ml_model,
         normalize=Config.ml_normalize,
         alpha=Config.ml_alpha,
+        kernel=Config.ml_kernel
     )
 
     Model.train_model(
@@ -62,7 +63,6 @@ def main():
     )
 
     logging.info("Model successfully trained.")
-    logging.debug("Model coefficients: " + str(model.coef_))
 
     logging.debug("Creating predictions...")
     baseline_mean_prediction = Predict.predict_mean(train_dataset, test_dataset.target.shape[0])
@@ -106,11 +106,20 @@ def main():
 
         if Config.ml_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.
-            top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
-            print(top_features_table.table)
+            try:
+                top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
+                print(top_features_table.table)
+            except:
+                pass
 
         print("Base ranking: %i" % base_ranking)
         print("Test ranking: %i" % test_ranking)
+        if test_ranking == 0:
+            print("Congratulations! Best one so far!")
+        elif base_ranking < test_ranking:
+            print("Hey, at least better than the baseline!")
+        else:
+            print("Welp! Better try something else!")
 
     # TODO: If CV, show learning curve
 

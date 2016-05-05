@@ -3,22 +3,23 @@
 import logging
 
 from sklearn import linear_model
-from sklearn import preprocessing
+from sklearn import svm
 
 from ml import Preprocessing
-from ml.Reporting import Report
 
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
+MODEL_TYPE_SVR = 'SVR'
 
 
-def create_model(model_type, normalize=False, alpha=None):
+def create_model(model_type, normalize=False, alpha=None, kernel=None):
     """ Creates a new model of the specified type.
 
     Args:
         model_type (str): The type of model to create. Use one of the MODEL_TYPE_X constants.
         normalize (bool): If normalization is to be used.
         alpha (float): The regularization parameter. Will only be used if applicable to the model type.
+        kernel (str): The kernel to use, if applicable to the model type.
 
     Returns:
         (LinearModel) The model instance.
@@ -38,6 +39,8 @@ def create_model(model_type, normalize=False, alpha=None):
             normalize=normalize,
             copy_X=True,
         )
+    elif model_type == MODEL_TYPE_SVR:
+        return svm.SVR(kernel=kernel)
     else:
         raise ValueError("The model type %s is not supported." % model_type)
 

@@ -36,6 +36,7 @@ class ScoreboardEntry:
 
     def __hash__(self):
         fields = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
+        fields = filter(lambda attr: attr not in ('evs', 'mse','mae','mde','r2s'), fields)
         field_values = tuple(str(getattr(self, field)) for field in fields)
         return hash(field_values)
 

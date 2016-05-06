@@ -14,6 +14,8 @@ Es wird Python 3.5 mit Scikit-learn und SQLAlchemy benötigt. Am einfachsten geh
 
     `activate ml`
     
+    `pip install terminaltables`
+    
 3. PyCharm konfigurieren: 
   * Settings öffnen (CTRL + ALT + S)
   * _Project: ML-Pipeline_ -> _Project Interpreter_

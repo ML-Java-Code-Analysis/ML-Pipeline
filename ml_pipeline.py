@@ -52,6 +52,7 @@ def main():
     model = Model.create_model(
         Config.ml_model,
         normalize=Config.ml_normalize,
+        cross_validation=Config.ml_cross_validation,
         alpha=Config.ml_alpha,
         kernel=Config.ml_kernel
     )
@@ -116,7 +117,7 @@ def main():
         print("Test ranking: %i" % test_ranking)
         if test_ranking == 0:
             print("Congratulations! Best one so far!")
-        elif base_ranking < test_ranking:
+        elif base_ranking > test_ranking:
             print("Hey, at least better than the baseline!")
         else:
             print("Welp! Better try something else!")
@@ -191,5 +192,5 @@ def init_logging(log_file=None, log_level=None, log_override=True, log_format=No
     console_handler.setLevel(numeric_log_level)
     root_logger.addHandler(console_handler)
 
-
-main()
+if __name__ == '__main__':
+    main()

@@ -88,7 +88,7 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'model', optional=False)
     _read_option(config, dataset_section, 'normalize', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'alpha', value_type=TYPE_FLOAT)
-    _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_INT)
+    _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'kernel')
     _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
 

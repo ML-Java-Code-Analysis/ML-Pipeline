@@ -215,7 +215,7 @@ def get_report_comparisation_table(reports, score_attrs=SCORE_R2S):
 
 
 def get_top_features_table(model, features, n):
-    sorted_enum = sorted(enumerate(model.coef_[0]), key=lambda x: abs(x[1]), reverse=True)
+    sorted_enum = sorted(enumerate(model.coef_), key=lambda x: abs(x[1]), reverse=True)
     n = min(n, len(sorted_enum))
 
     table_data = [["Coefficient", "Feature"]]

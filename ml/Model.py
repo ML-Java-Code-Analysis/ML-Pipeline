@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # coding=utf-8
 import logging
-
+import numpy as np
 from sklearn import linear_model
 from sklearn import svm
+from sklearn.grid_search import GridSearchCV
 
 from ml import Preprocessing
 
@@ -12,12 +13,13 @@ MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
 
 
-def create_model(model_type, normalize=False, alpha=None, kernel=None):
+def create_model(model_type, normalize=False, cross_validation=False, alpha=None, kernel=None):
     """ Creates a new model of the specified type.
 
     Args:
         model_type (str): The type of model to create. Use one of the MODEL_TYPE_X constants.
         normalize (bool): If normalization is to be used.
+        cross_validation (bool): If cross validation is to be applied, if applicable to the model type.
         alpha (float): The regularization parameter. Will only be used if applicable to the model type.
         kernel (str): The kernel to use, if applicable to the model type.
 
@@ -33,14 +35,31 @@ def create_model(model_type, normalize=False, alpha=None, kernel=None):
             copy_X=True,
         )
     elif model_type == MODEL_TYPE_RIDREG:
-        return linear_model.Ridge(
-            alpha=alpha,
-            fit_intercept=True,
-            normalize=normalize,
-            copy_X=True,
-        )
+        if cross_validation:
+            return linear_model.RidgeCV(
+                alphas=[0.1, 1.0, 10.0, 100.0, 1000.0],
+                cv=5,
+                normalize=normalize,
+            )
+        else:
+            return linear_model.Ridge(
+                alpha=alpha,
+                fit_intercept=True,
+                normalize=normalize,
+                copy_X=True,
+            )
     elif model_type == MODEL_TYPE_SVR:
-        return svm.SVR(kernel=kernel)
+        svr =  svm.SVR(
+            kernel=kernel,
+            cache_size=8000,
+        )
+        if cross_validation:
+            cs = np.logspace(-6, -1, 10)
+            return GridSearchCV(
+                estimator=svr,
+                param_grid=dict(C=cs),
+                n_jobs=-1)
+        return svr
     else:
         raise ValueError("The model type %s is not supported." % model_type)
 

@@ -31,6 +31,7 @@ def main():
         Config.dataset_train_end,
         Config.dataset_features,
         Config.dataset_target,
+        use_ngrams=Config.dataset_use_ngrams,
         label="Training",
         cache=Config.dataset_cache)
     if train_dataset is None:
@@ -43,6 +44,7 @@ def main():
         Config.dataset_test_end,
         Config.dataset_features,
         Config.dataset_target,
+        use_ngrams=Config.dataset_use_ngrams,
         label="Test",
         cache=Config.dataset_cache)
     if test_dataset is None:

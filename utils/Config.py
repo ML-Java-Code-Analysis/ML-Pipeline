@@ -32,6 +32,7 @@ dataset_train_start = None
 dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
+dataset_use_ngrams = False
 dataset_features = None
 
 # Machine learning options
@@ -82,6 +83,7 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'use_ngrams', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_LIST)
 
     dataset_section = "ML"

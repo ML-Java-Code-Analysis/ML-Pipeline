@@ -13,7 +13,8 @@ MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
 
 
-def create_model(model_type, normalize=False, cross_validation=False, alpha=None, kernel=None):
+def create_model(model_type, normalize=False, cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None,
+                 C_range=None, kernel=None):
     """ Creates a new model of the specified type.
 
     Args:
@@ -29,39 +30,59 @@ def create_model(model_type, normalize=False, cross_validation=False, alpha=None
     model_type = model_type.upper()
     logging.debug("Creating model with type %s" % model_type)
     if model_type == MODEL_TYPE_LINREG:
-        return linear_model.LinearRegression(
-            fit_intercept=True,
-            normalize=normalize,
-            copy_X=True,
-        )
+        return create_linear_regression_model(normalize)
     elif model_type == MODEL_TYPE_RIDREG:
         if cross_validation:
-            return linear_model.RidgeCV(
-                alphas=[0.1, 1.0, 10.0, 100.0, 1000.0],
-                cv=5,
-                normalize=normalize,
-            )
+            return create_ridge_cv_model(alpha_range, normalize)
         else:
-            return linear_model.Ridge(
-                alpha=alpha,
-                fit_intercept=True,
-                normalize=normalize,
-                copy_X=True,
-            )
+            return create_ridge_model(alpha, normalize)
     elif model_type == MODEL_TYPE_SVR:
-        svr =  svm.SVR(
-            kernel=kernel,
-            cache_size=8000,
-        )
         if cross_validation:
-            cs = np.logspace(-6, -1, 10)
-            return GridSearchCV(
-                estimator=svr,
-                param_grid=dict(C=cs),
-                n_jobs=-1)
-        return svr
+            return create_svr_cv_model(C_range, kernel)
+        else:
+            return create_svr_model(C, kernel)
     else:
         raise ValueError("The model type %s is not supported." % model_type)
+
+
+def create_svr_cv_model(C_range=None, kernel=None):
+    return GridSearchCV(
+        estimator=create_svr_model(0, kernel),
+        param_grid=dict(C=C_range),
+        n_jobs=-1)
+
+
+def create_svr_model(C=None, kernel=None):
+    return svm.SVR(
+        kernel=kernel,
+        C=C,
+        cache_size=8000,
+    )
+
+
+def create_ridge_model(alpha=None, normalize=None):
+    return linear_model.Ridge(
+        alpha=alpha,
+        fit_intercept=True,
+        normalize=normalize,
+        copy_X=True,
+    )
+
+
+def create_ridge_cv_model(alpha_range=None, normalize=None, cv=5):
+    return linear_model.RidgeCV(
+        alphas=alpha_range,
+        cv=cv,
+        normalize=normalize,
+    )
+
+
+def create_linear_regression_model(normalize=None):
+    return linear_model.LinearRegression(
+        fit_intercept=True,
+        normalize=normalize,
+        copy_X=True,
+    )
 
 
 def train_model(model, train_dataset, polynomial_degree=1):

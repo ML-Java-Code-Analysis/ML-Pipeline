@@ -56,6 +56,9 @@ def main():
         normalize=Config.ml_normalize,
         cross_validation=Config.ml_cross_validation,
         alpha=Config.ml_alpha,
+        alpha_range=Config.ml_alpha_range,
+        C=Config.ml_C,
+        C_range=Config.ml_C_range,
         kernel=Config.ml_kernel
     )
 
@@ -106,6 +109,29 @@ def main():
             [baseline_wr_report, training_report, test_report],
             [Reporting.SCORE_R2S, Reporting.SCORE_MAE, Reporting.SCORE_MDE])
         print(comparisation_table.table)
+
+        if Config.reporting_validation_curve:
+            Reporting.plot_validation_curve(
+                model_type=Config.ml_model,
+                train_dataset=train_dataset,
+                normalize=Config.ml_normalize,
+                alpha_range=Config.ml_alpha_range,
+                C_range=Config.ml_C_range,
+                kernel=Config.ml_kernel,
+            )
+
+        if Config.reporting_learning_curve:
+            Reporting.plot_learning_curve(
+                model_type=Config.ml_model,
+                train_dataset=train_dataset,
+                normalize=Config.ml_normalize,
+                cross_validation=Config.ml_cross_validation,
+                alpha=Config.ml_alpha,
+                alpha_range=Config.ml_alpha_range,
+                C=Config.ml_C,
+                C_range=Config.ml_C_range,
+                kernel=Config.ml_kernel,
+            )
 
         if Config.ml_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.

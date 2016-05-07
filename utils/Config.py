@@ -20,6 +20,8 @@ logging_date_format = '%Y.%m.%d %H:%M:%S'
 
 # Reporting options
 reporting_display = True
+reporting_validation_curve = False
+reporting_learning_curve = False
 
 # Repository options
 repository_name = None
@@ -39,6 +41,9 @@ dataset_features = None
 ml_model = None
 ml_normalize = False
 ml_alpha = None
+ml_alpha_range = None
+ml_C = None
+ml_C_range = None
 ml_cross_validation = None
 ml_kernel = 'rbf'
 ml_polynomial_degree = 1
@@ -71,6 +76,8 @@ def read_config(config_file):
 
     reporting_section = 'REPORTING'
     _read_option(config, reporting_section, 'display_reports', target='reporting_display', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'validation_curve', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'learning_curve', value_type=TYPE_BOOLEAN)
 
     repository_section = 'REPOSITORY'
     _read_option(config, repository_section, 'name', optional=False)
@@ -84,26 +91,30 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'use_ngrams', value_type=TYPE_BOOLEAN)
-    _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_LIST)
+    _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_STR_LIST)
 
     dataset_section = "ML"
     _read_option(config, dataset_section, 'model', optional=False)
     _read_option(config, dataset_section, 'normalize', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'alpha', value_type=TYPE_FLOAT)
+    _read_option(config, dataset_section, 'alpha_range', value_type=TYPE_FLOAT_LIST)
+    _read_option(config, dataset_section, 'C', target='ml_C', value_type=TYPE_FLOAT)
+    _read_option(config, dataset_section, 'C_range', target='ml_C_range', value_type=TYPE_FLOAT_LIST)
     _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'kernel')
     _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
 
 
-TYPE_STRING = 1
+TYPE_STR = 1
 TYPE_INT = 2
 TYPE_FLOAT = 3
 TYPE_BOOLEAN = 4
 TYPE_DATE = 5
-TYPE_LIST = 6
+TYPE_STR_LIST = 6
+TYPE_FLOAT_LIST = 7
 
 
-def _read_option(config, section, option, value_type=TYPE_STRING, target=None, optional=True, date_format='%Y.%m.%d'):
+def _read_option(config, section, option, value_type=TYPE_STR, target=None, optional=True, date_format='%Y.%m.%d'):
     """ Reads an option into a global variable.
 
     If no target is provided, the global variable is called <section>_<option>.
@@ -118,7 +129,7 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
         date_format (str): Optional. The format to convert datestrings to dates. Only used when valuetype is Date.
     """
     if config.has_option(section, option):
-        if value_type == TYPE_STRING:
+        if value_type == TYPE_STR:
             value = config.get(section, option)
         elif value_type == TYPE_INT:
             value = config.getint(section, option)
@@ -129,9 +140,12 @@ def _read_option(config, section, option, value_type=TYPE_STRING, target=None, o
         elif value_type == TYPE_DATE:
             value = config.get(section, option)
             value = datetime.strptime(value, date_format)
-        elif value_type == TYPE_LIST:
+        elif value_type == TYPE_STR_LIST:
             value = config.get(section, option)
             value = [item.strip() for item in value.split(',')]
+        elif value_type == TYPE_FLOAT_LIST:
+            value = config.get(section, option)
+            value = [float(item.strip()) for item in value.split(',')]
         else:
             raise ValueError("No valid Type provided")
 

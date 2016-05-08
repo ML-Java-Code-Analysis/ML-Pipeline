@@ -85,7 +85,7 @@ def create_linear_regression_model(normalize=None):
     )
 
 
-def train_model(model, train_dataset, polynomial_degree=1):
+def train_model(model, train_dataset):
     """ Trains a model.
 
     Args:
@@ -96,10 +96,8 @@ def train_model(model, train_dataset, polynomial_degree=1):
     Returns:
         (LinearModel) The model instance.
     """
-    assert polynomial_degree > 0, "Polynomial degree must be higher than 0!"
     if type(model) == str:
         model = create_model(model)
-    data = Preprocessing.preprocess(train_dataset, polynomial_degree=polynomial_degree)
     logging.debug("Fitting training set to model")
-    model.fit(data, train_dataset.target)
+    model.fit(train_dataset.data, train_dataset.target)
     return model

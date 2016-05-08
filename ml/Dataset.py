@@ -8,13 +8,15 @@ from datetime import datetime
 import numpy as np
 from sqlalchemy.orm import joinedload
 
+from ml import Preprocessing
 from model import DB
 from model.objects.Commit import Commit
 from model.objects.Repository import Repository
 
 
 class Dataset:
-    def __init__(self, feature_count, version_count, feature_list, target_id, start, end, has_ngrams=False, label=""):
+    def __init__(self, feature_count, version_count, feature_list, target_id, start, end, poly_degree=1,
+                 has_ngrams=False, label=""):
         """" Initialize an empty dataset.
 
         A dataset consists of two components:
@@ -32,17 +34,20 @@ class Dataset:
             label (str): An arbitrary label, e.g. "Test", for this dataset. Useful when caching!
         """
         logging.debug("Initializing Dataset with %i features and %i versions." % (feature_count, version_count))
+        assert poly_degree > 0, "Polynomial degree must be higher than 0!"
         self.data = np.zeros((version_count, feature_count))
         self.target = np.zeros(version_count)
         self.feature_list = feature_list
         self.target_id = target_id
         self.start = start
         self.end = end
+        self.poly_degree = poly_degree
         self.has_ngrams = has_ngrams
         self.label = label
 
 
-def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=False, label="", cache=False, cache_directory=None):
+def get_dataset(repository, start, end, feature_list, target_id, poly_degree=1, use_ngrams=False, label="", cache=False,
+                cache_directory=None):
     """ Reads a dataset from a repository in a specific time range.
 
     If cache=True, the dataset will be read from a file, if one exists. If not, after reading from the DB, it will
@@ -64,19 +69,21 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
     if cache and not cache_directory:
         cache_directory = os.getcwd()
     if cache:
-        dataset = load_dataset_file(cache_directory, label, feature_list, target_id, start, end, use_ngrams)
+        dataset = load_dataset_file(cache_directory, label, feature_list, target_id, start, end, poly_degree,
+                                    use_ngrams)
         if dataset is not None:
             return dataset
 
-    dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams=use_ngrams, label=label)
+    dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, poly_degree=poly_degree,
+                                  use_ngrams=use_ngrams, label=label)
 
-    if cache:
+    if dataset is not None and cache:
         save_dataset_file(dataset, cache_directory)
 
     return dataset
 
 
-def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams=False, label=""):
+def get_dataset_from_db(repository, start, end, feature_list, target_id, poly_degree=1, use_ngrams=False, label=""):
     """ Reads a dataset from a repository in a specific time range
 
     Args:
@@ -120,13 +127,14 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
     feature_count = len(feature_list)
     logging.debug("%i features found." % feature_count)
 
-    dataset = Dataset(feature_count, version_count, feature_list, target_id, start, end, use_ngrams, label)
+    dataset = Dataset(feature_count, version_count, feature_list, target_id, start, end, poly_degree, use_ngrams, label)
     i = 0
     for commit in commits:
         for version in commit.versions:
 
             if len(version.upcoming_bugs) == 0:
-                raise Exception("Version %s has no upcoming_bugs entry. Can't retrieve target, skipping version." % version.id)
+                raise Exception(
+                    "Version %s has no upcoming_bugs entry. Can't retrieve target, skipping version." % version.id)
             target = version.upcoming_bugs[0].get_target(target_id)
             if target is None:
                 logging.warning("Upcoming_bugs entry of Version %s has no target %s. skipping version." % (
@@ -139,6 +147,10 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
                     dataset.data[i][j] = feature_value.value
                     j += 1
             i += 1
+
+    if poly_degree > 1:
+        dataset.data = Preprocessing.preprocess(dataset, polynomial_degree=poly_degree)
+
     session.close()
     return dataset
 
@@ -206,16 +218,17 @@ def hash_features(feature_list):
 def generate_filename_for_dataset(dataset, strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     return generate_filename(dataset.label, dataset.feature_list, dataset.target_id, dataset.start, dataset.end,
-                             dataset.has_ngrams, strftime_format)
+                             dataset.poly_degree, dataset.has_ngrams, strftime_format)
 
 
-def generate_filename(label, feature_list, target_id, start, end, use_ngrams, strftime_format="%Y_%m_%d"):
+def generate_filename(label, feature_list, target_id, start, end, poly_degree, use_ngrams, strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     feature_hash = hash_features(feature_list)
     start_str = start.strftime(strftime_format)
     end_str = end.strftime(strftime_format)
+    poly_str = "poly" + str(poly_degree)
     ngram_str = "ngram" if use_ngrams else "nongram"
-    return "_".join([label, start_str, end_str, target_id, ngram_str, feature_hash]) + ".dataset"
+    return "_".join([label, start_str, end_str, target_id, poly_str, ngram_str, feature_hash]) + ".dataset"
 
 
 def get_file_header(dataset):
@@ -239,7 +252,8 @@ def save_dataset_file(dataset, directory):
     logging.debug("Saving successful")
 
 
-def load_dataset_file(directory, label, feature_list, target_id, start, end, use_ngrams, strftime_format="%Y_%m_%d"):
+def load_dataset_file(directory, label, feature_list, target_id, start, end, poly_degree, use_ngrams,
+                      strftime_format="%Y_%m_%d"):
     """ Load a dataset from a cache file.
 
     Args:
@@ -254,7 +268,7 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, use
     Returns:
         Dataset: The dataset, if one was retrieved. Otherwise None.
     """
-    filename = generate_filename(label, feature_list, target_id, start, end, use_ngrams, strftime_format)
+    filename = generate_filename(label, feature_list, target_id, start, end, poly_degree, use_ngrams, strftime_format)
     filepath = os.path.join(directory, filename)
     logging.debug("Attempting to load cached dataset from %s" % filepath)
     if os.path.isfile(filepath):
@@ -264,7 +278,8 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, use
 
         logging.debug(
             "Successfully retrieved data %s and target %s from cache file." % (str(data.shape), str(target.shape)))
-        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, use_ngrams, label)
+        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, poly_degree, use_ngrams,
+                          label)
         dataset.data = data
         dataset.target = target.T[0]
         return dataset

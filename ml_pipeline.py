@@ -31,6 +31,7 @@ def main():
         Config.dataset_train_end,
         Config.dataset_features,
         Config.dataset_target,
+        poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Training",
         cache=Config.dataset_cache)
@@ -44,6 +45,7 @@ def main():
         Config.dataset_test_end,
         Config.dataset_features,
         Config.dataset_target,
+        poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Test",
         cache=Config.dataset_cache)
@@ -64,8 +66,7 @@ def main():
 
     Model.train_model(
         model,
-        train_dataset,
-        polynomial_degree=Config.ml_polynomial_degree
+        train_dataset
     )
 
     logging.info("Model successfully trained.")
@@ -76,12 +77,10 @@ def main():
     baseline_wr_prediction = Predict.predict_weighted_random(train_dataset, test_dataset.target.shape[0])
     training_prediction = Predict.predict_with_model(
         train_dataset,
-        model,
-        polynomial_degree=Config.ml_polynomial_degree)
+        model)
     test_prediction = Predict.predict_with_model(
         test_dataset,
-        model,
-        polynomial_degree=Config.ml_polynomial_degree)
+        model)
 
     logging.debug("Creating reports from predictions")
     baseline_mean_report = Reporting.Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")

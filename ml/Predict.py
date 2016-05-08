@@ -50,6 +50,5 @@ def weighted_choice(choices):
     assert False, "Shouldn't get here"
 
 
-def predict_with_model(dataset, model, polynomial_degree=1):
-    data = Preprocessing.preprocess(dataset, polynomial_degree=polynomial_degree)
-    return model.predict(data)
+def predict_with_model(dataset, model):
+    return model.predict(dataset.data)

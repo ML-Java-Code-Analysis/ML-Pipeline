@@ -34,6 +34,7 @@ dataset_train_start = None
 dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
+dataset_polynomial_degree = 1
 dataset_use_ngrams = False
 dataset_features = None
 
@@ -46,7 +47,6 @@ ml_C = None
 ml_C_range = None
 ml_cross_validation = None
 ml_kernel = 'rbf'
-ml_polynomial_degree = 1
 
 
 def read_config(config_file):
@@ -90,6 +90,7 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
+    _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
     _read_option(config, dataset_section, 'use_ngrams', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_STR_LIST)
 
@@ -102,7 +103,6 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'C_range', target='ml_C_range', value_type=TYPE_FLOAT_LIST)
     _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'kernel')
-    _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
 
 
 TYPE_STR = 1

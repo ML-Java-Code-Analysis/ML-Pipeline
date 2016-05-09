@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # coding=utf-8
 import logging
+import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
-from sklearn.linear_model.ridge import Ridge
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -222,6 +223,29 @@ def get_report_comparisation_table(reports, score_attrs=SCORE_R2S):
     return table
 
 
+def save_report_file(content, filename="report", timestamp=True, file_ext="txt", directory=None,
+                     timestamp_format="%Y_%m_%d_%H_%M"):
+    """
+
+    Args:
+        content:
+        filename:
+        timestamp:
+        file_ext:
+        directory:
+        timestamp_format:
+    """
+    if not directory:
+        directory = os.getcwd()
+    if timestamp:
+        time_str = datetime.now().strftime(timestamp_format)
+        filename += "_" + time_str
+    filepath = os.path.join(directory, filename + "." + file_ext)
+
+    with open(filepath, 'w') as f:
+        f.write(content)
+
+
 def get_top_features_table(model, features, n):
     """ Returns a formatted table which lists the n most-weighted feature of a model.
 
@@ -297,6 +321,7 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, n
 def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
                         normalize=False, cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None,
                         C_range=None, kernel=None, n_jobs=-1):
+    #TODO: Das Modell Muss OHNE CV erstellt werden, bereits mit dem idealen Parameter. Glaub.
     estimator = Model.create_model(
         model_type=model_type,
         normalize=normalize,

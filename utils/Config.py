@@ -20,6 +20,8 @@ logging_date_format = '%Y.%m.%d %H:%M:%S'
 
 # Reporting options
 reporting_display = True
+reporting_save = True
+reporting_file = 'report'
 reporting_validation_curve = False
 reporting_learning_curve = False
 
@@ -76,6 +78,8 @@ def read_config(config_file):
 
     reporting_section = 'REPORTING'
     _read_option(config, reporting_section, 'display_reports', target='reporting_display', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'save_reports', target='reporting_save', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'file')
     _read_option(config, reporting_section, 'validation_curve', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'learning_curve', value_type=TYPE_BOOLEAN)
 

@@ -2,6 +2,8 @@
 # coding=utf-8
 import logging
 import argparse
+import datetime
+
 from ml import Dataset, Model, Predict, Scoreboard
 from ml import Reporting
 from model import DB
@@ -9,6 +11,7 @@ from model.DB import DBError
 from utils import Config
 from utils.Config import ConfigError
 
+report_str = ""
 
 def main():
     cli_args = parse_arguments()
@@ -31,6 +34,7 @@ def main():
         Config.dataset_train_end,
         Config.dataset_features,
         Config.dataset_target,
+        normalize=Config.ml_normalize,
         poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Training",
@@ -45,6 +49,7 @@ def main():
         Config.dataset_test_end,
         Config.dataset_features,
         Config.dataset_target,
+        normalize=Config.ml_normalize,
         poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Test",
@@ -97,17 +102,43 @@ def main():
     base_ranking = Scoreboard.get_ranking(base_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
     test_ranking = Scoreboard.get_ranking(test_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
 
-    if Config.reporting_display:
-        print(baseline_mean_report)
-        print(baseline_med_report)
-        print(baseline_wr_report)
-        print(training_report)
-        print(test_report)
+    if Config.reporting_display or Config.reporting_save:
+        # TODO: Also print some of the relevant config!
+        # Or just the whole config!
+
+        add_to_report(baseline_mean_report)
+        add_to_report(baseline_med_report)
+        add_to_report(baseline_wr_report)
+        add_to_report(training_report)
+        add_to_report(test_report)
 
         comparisation_table = Reporting.get_report_comparisation_table(
             [baseline_wr_report, training_report, test_report],
             [Reporting.SCORE_R2S, Reporting.SCORE_MAE, Reporting.SCORE_MDE])
-        print(comparisation_table.table)
+        add_to_report(comparisation_table.table)
+
+        if Config.dataset_polynomial_degree == 1:
+            # Determining top features only makes sense without polynomial features.
+            try:
+                top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
+                add_to_report(top_features_table.table)
+            except:
+                pass
+
+        add_to_report("Base ranking: %i" % base_ranking)
+        add_to_report("Test ranking: %i" % test_ranking)
+        if test_ranking == 0:
+            add_to_report("Congratulations! Best one so far!")
+        elif base_ranking > test_ranking:
+            add_to_report("Hey, at least better than the baseline!")
+        else:
+            add_to_report("Do you even learn?")
+
+        if Config.reporting_display:
+            print(report_str)
+
+        if Config.reporting_save:
+            Reporting.save_report_file(report_str, filename=Config.reporting_file)
 
         if Config.reporting_validation_curve:
             Reporting.plot_validation_curve(
@@ -132,26 +163,12 @@ def main():
                 kernel=Config.ml_kernel,
             )
 
-        if Config.ml_polynomial_degree == 1:
-            # Determining top features only makes sense without polynomial features.
-            try:
-                top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
-                print(top_features_table.table)
-            except:
-                pass
-
-        print("Base ranking: %i" % base_ranking)
-        print("Test ranking: %i" % test_ranking)
-        if test_ranking == 0:
-            print("Congratulations! Best one so far!")
-        elif base_ranking > test_ranking:
-            print("Hey, at least better than the baseline!")
-        else:
-            print("Welp! Better try something else!")
-
-    # TODO: If CV, show learning curve
-
     logging.info("All done. Exiting ML Pipeline")
+
+
+def add_to_report(string, line_breaks=2):
+    global report_str
+    report_str += "\n"*line_breaks + str(string)
 
 
 def die(message=None):
@@ -178,7 +195,8 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def init_logging(log_file=None, log_level=None, log_override=True, log_format=None, log_date_format=None):
+def init_logging(log_file=None, log_level=None, log_override=None, log_format=None, log_date_format=None,
+                 log_file_timestamp_format="%Y_%m_%d_%H_%M"):
     """ Initializes the root logger. If Arguments are not provided, they will be read from the Config
 
     Args:
@@ -202,14 +220,21 @@ def init_logging(log_file=None, log_level=None, log_override=True, log_format=No
     numeric_log_level = getattr(logging, log_level.upper(), None)
     if not isinstance(numeric_log_level, int):
         raise ValueError('Invalid log level: %s' % log_level)
-    file_mode = 'w' if log_override else None
+
+    if not log_override:
+        file_mode = 'w'
+    else:
+        file_mode = 'a'
 
     log_formatter = logging.Formatter(fmt=log_format, datefmt=log_date_format)
     root_logger = logging.getLogger()
     root_logger.setLevel(numeric_log_level)
 
     if log_file is not None:
-        file_handler = logging.FileHandler(log_file, mode=file_mode)
+        if not log_override:
+            time_str = datetime.datetime.now().strftime(log_file_timestamp_format)
+            log_file += "_" + time_str
+        file_handler = logging.FileHandler(log_file + ".log", mode=file_mode)
         file_handler.setFormatter(log_formatter)
         file_handler.setLevel(numeric_log_level)
         root_logger.addHandler(file_handler)
@@ -218,6 +243,7 @@ def init_logging(log_file=None, log_level=None, log_override=True, log_format=No
     console_handler.setFormatter(log_formatter)
     console_handler.setLevel(numeric_log_level)
     root_logger.addHandler(console_handler)
+
 
 if __name__ == '__main__':
     main()

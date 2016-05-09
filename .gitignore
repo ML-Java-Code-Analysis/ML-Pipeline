@@ -1,6 +1,8 @@
 # Custom things
 *.dataset
 *.scoreboard
+report*.txt
+*curve.png
 
 # PyCharm Stuff
 .idea/

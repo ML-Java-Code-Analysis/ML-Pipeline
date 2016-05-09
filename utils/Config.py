@@ -24,6 +24,8 @@ reporting_save = True
 reporting_file = 'report'
 reporting_validation_curve = False
 reporting_learning_curve = False
+reporting_display_charts = True
+reporting_save_charts = False
 
 # Repository options
 repository_name = None
@@ -82,6 +84,8 @@ def read_config(config_file):
     _read_option(config, reporting_section, 'file')
     _read_option(config, reporting_section, 'validation_curve', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'learning_curve', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'display_charts', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'save_charts', value_type=TYPE_BOOLEAN)
 
     repository_section = 'REPOSITORY'
     _read_option(config, repository_section, 'name', optional=False)

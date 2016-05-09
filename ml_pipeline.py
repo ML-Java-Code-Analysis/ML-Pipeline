@@ -148,6 +148,8 @@ def main():
                 alpha_range=Config.ml_alpha_range,
                 C_range=Config.ml_C_range,
                 kernel=Config.ml_kernel,
+                display=Config.reporting_display_charts,
+                save=Config.reporting_save_charts
             )
 
         if Config.reporting_learning_curve:
@@ -161,6 +163,8 @@ def main():
                 C=Config.ml_C,
                 C_range=Config.ml_C_range,
                 kernel=Config.ml_kernel,
+                display=Config.reporting_display_charts,
+                save=Config.reporting_save_charts
             )
 
     logging.info("All done. Exiting ML Pipeline")

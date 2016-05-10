@@ -7,10 +7,10 @@ Es wird Python 3.5 mit Scikit-learn und SQLAlchemy benötigt. Am einfachsten geh
 1. Anaconda installieren
   * Downloaden von https://www.continuum.io/downloads
   * _Python 3.5 Windows 64-Bit Graphical Installer_ wählen
-  * 
+
 2. Environment aufsetzen:
   * In der Kommandozeile (Windows):
-  * `conda create --name ml scikit-learn sqlalchemy pymysql`
+  * `conda create --name ml scikit-learn sqlalchemy pymysql matplotlib`
 
     `activate ml`
     

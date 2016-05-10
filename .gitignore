@@ -1,4 +1,5 @@
 # Custom things
+*.config
 *.dataset
 *.scoreboard
 report*.txt

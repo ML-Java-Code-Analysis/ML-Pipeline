@@ -117,6 +117,9 @@ def main():
             [Reporting.SCORE_R2S, Reporting.SCORE_MAE, Reporting.SCORE_MDE])
         add_to_report(comparisation_table.table)
 
+        category_table = Reporting.get_category_table(test_dataset.target, test_prediction)
+        add_to_report(category_table.table)
+
         if Config.dataset_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.
             try:

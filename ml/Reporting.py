@@ -273,8 +273,55 @@ def get_top_features_table(model, features, n):
     return table
 
 
+def get_category_table(ground_truth, predicted, categories=None):
+    if categories is None:
+        categories = [0, 1, 2, 4]
+    hits = {}
+    misses = {}
+    for value_pair in zip(ground_truth, predicted):
+        true_category = get_category(value_pair[0], categories)
+        predicted_category = get_category(value_pair[1], categories)
+
+        if true_category == predicted_category:
+            hits[true_category] = hits.get(true_category, 0) + 1
+        else:
+            misses[true_category] = misses.get(true_category, 0) + 1
+
+    table_data = [["Category", "Hits", "Misses", "Total"]]
+    for i, category in enumerate(categories):
+        hit_count = hits.get(category, 0)
+        miss_count = misses.get(category, 0)
+
+        cat_str = str(category)
+        if i == len(categories) - 1:
+            cat_str += "+"
+        elif categories[i + 1] - category > 1:
+            cat_str += "-" + str(categories[i + 1] - 1)
+
+        record = [cat_str, str(hit_count), str(miss_count), str(hit_count + miss_count)]
+        table_data.append(record)
+    total_hits = sum(hits.values())
+    total_misses = sum(misses.values())
+    table_data.append(["Total", str(total_hits), str(total_misses), str(total_hits + total_misses)])
+    table = Table(table_data)
+    table.title = "Categoric rating"
+    table.inner_footing_row_border = True
+    return table
+
+
+def get_category(value, categories):
+    value = max(round(value), 0)
+    for i, category in enumerate(categories[:-1]):
+        if value < categories[i + 1]:
+            return category
+    return categories[-1]
+
+
 def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, normalize=True, alpha_range=None,
                           C_range=None, kernel=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
+    if not save and not display:
+        return
+
     model_type = model_type.upper()
     if model_type == Model.MODEL_TYPE_RIDREG:
         estimator = Model.create_ridge_model(normalize=normalize)
@@ -325,7 +372,10 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, n
 def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
                         normalize=False, cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None,
                         C_range=None, kernel=None, n_jobs=-1, save=False, display=True, filename="learning_curve"):
-    #TODO: Das Modell Muss OHNE CV erstellt werden, bereits mit dem idealen Parameter. Glaub.
+    if not save and not display:
+        return
+
+    # TODO: Das Modell Muss OHNE CV erstellt werden, bereits mit dem idealen Parameter. Glaub.
     estimator = Model.create_model(
         model_type=model_type,
         normalize=normalize,

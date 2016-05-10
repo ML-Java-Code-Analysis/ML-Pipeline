@@ -77,6 +77,7 @@ def init_db():
     from model.objects.Version import Version
     from model.objects.Line import Line
     from model.objects.FeatureValue import FeatureValue
+    from model.objects.NGramVector import NGramVector
     from model.objects.UpcomingBugsForVersion import UpcomingBugsForVersion
 
     engine = __get_engine()

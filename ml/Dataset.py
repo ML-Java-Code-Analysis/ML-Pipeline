@@ -85,7 +85,7 @@ def get_dataset(repository, start, end, feature_list, target_id, normalize=True,
 
 
 def get_dataset_from_db(repository, start, end, feature_list, target_id, normalize=True, poly_degree=1,
-                        use_ngrams=False, label=""):
+                        use_ngrams=False, ngram_sizes=None, ngram_levels=None, label=""):
     """ Reads a dataset from a repository in a specific time range
 
     Args:
@@ -99,12 +99,6 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, normali
     Returns:
         Dataset: The populated dataset.
     """
-    """if cache:
-        if not cache_directory:
-            cache_directory = os.getcwd()
-        if dataset_file_exists(start, end, feature_list, cache_directory):
-    """
-
     session = DB.create_session()
 
     if type(repository) is str:
@@ -114,40 +108,56 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, normali
             logging.error("Repository with name %s not found! Returning no Dataset" % repository_name)
             return None
 
-    commits = get_commits_in_range(session, repository, start, end)
+    commits = get_commits_in_range(session, repository, start, end, use_ngrams=use_ngrams)
     if commits is None:
         logging.error("Could not retrieve commits! Returning no Dataset")
+        return None
     logging.debug("Commits received.")
+    session.close()
 
-    version_count = 0
+    if len(commits) == 0:
+        logging.error("No Commits found!")
+        return None
+
+    versions = []
     for commit in commits:
-        version_count += len(commit.versions)
-    logging.debug("%i commits with %i versions found." % (len(commits), version_count))
+        versions += commit.versions
+    logging.debug("%i commits with %i versions found." % (len(commits), len(versions)))
 
     feature_count = len(feature_list)
     logging.debug("%i features found." % feature_count)
 
-    dataset = Dataset(feature_count, version_count, feature_list, target_id, start, end, normalize, poly_degree,
+    ngram_count = 0
+    if use_ngrams:
+        for ngram_vector in versions[0].ngram_vectors:
+            if ngram_sizes is None or ngram_vector.ngram_size in ngram_sizes \
+                    and ngram_levels is None or ngram_vector.ngram_level in ngram_levels:
+                ngram_count += ngram_vector.vector_size
+        logging.debug("%i total ngrams." % ngram_count)
+
+    dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, normalize, poly_degree,
                       use_ngrams, label)
     i = 0
-    for commit in commits:
-        for version in commit.versions:
-            if len(version.upcoming_bugs) == 0:
-                raise Exception("Version %s has no upcoming_bugs entry. Can't retrieve target!" % version.id)
-            target = version.upcoming_bugs[0].get_target(target_id)
-            if target is None:
-                raise Exception("Upcoming_bugs entry of Version %s has no target %s!" % (version.id, target))
-            dataset.target[i] = target
-            j = 0
-            for feature_value in version.feature_values:
-                if feature_value.feature_id in feature_list:
-                    dataset.data[i][j] = feature_value.value
-                    j += 1
-            i += 1
+    for version in versions:
+        if len(version.upcoming_bugs) == 0:
+            raise Exception("Version %s has no upcoming_bugs entry. Can't retrieve target!" % version.id)
+        target = version.upcoming_bugs[0].get_target(target_id)
+        if target is None:
+            raise Exception("Upcoming_bugs entry of Version %s has no target %s!" % (version.id, target))
+        dataset.target[i] = target
+        j = 0
+        print(version.id + "\t" + str([x.feature_id for x in version.feature_values]))
+        for feature_value in version.feature_values:
+            if feature_value.feature_id in feature_list:
+                dataset.data[i][j] = feature_value.value
+                j += 1
+        for ngram_vector in version.ngram_vectors:
+            if ngram_sizes is None or ngram_vector.ngram_size in ngram_sizes \
+                    and ngram_levels is None or ngram_vector.ngram_level in ngram_levels:
+                pass
+        i += 1
 
     dataset = Preprocessing.preprocess(dataset, normalize, poly_degree)
-
-    session.close()
     return dataset
 
 
@@ -184,14 +194,21 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
         List[Commit] A list of commits. None, if something went wrong.
     """
     assert start < end, "The range start must be before the range end!"
+    # TODO: Maybe filter here already for ngrams and vectors?
+    # TODO: Order by feature, order by ngram size, level!
+    # TODO: NUR JAVA FILES REINNEHMEN!!!
     logging.debug("Querying for Commits in repository with id %s and between %s and %s" % (repository.id, start, end))
     try:
         # Load
         query = session.query(Commit). \
             options(joinedload(Commit.versions)). \
             options(joinedload('versions.feature_values')). \
-            options(joinedload('versions.upcoming_bugs')). \
-            filter(
+            options(joinedload('versions.upcoming_bugs'))
+
+        if use_ngrams:
+            query = query.options(joinedload('versions.ngram_vectors'))
+
+        query = query.filter(
             Commit.repository_id == repository.id,
             Commit.timestamp >= start,
             Commit.timestamp < end)

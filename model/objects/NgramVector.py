@@ -9,9 +9,11 @@ Base = Base().base
 
 
 # noinspection PyClassHasNoInit
-class NGramCount(Base):
-    __tablename__ = 'ngram_count'
+class NGramVector(Base):
+    __tablename__ = 'ngram_vector'
 
-    ngram_id = Column(String(500), primary_key=True)
     version_id = Column(String(36), ForeignKey('version.id'), primary_key=True)
-    count = Column(Integer)
+    ngram_size = Column(Integer)
+    ngram_level = Column(Integer)
+    vector_size = Column(Integer)
+    ngram_values = Column(String)

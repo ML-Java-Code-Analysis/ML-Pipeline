@@ -24,4 +24,5 @@ class Version(Base):
     # deleted = Column(Boolean)
     # lines = relationship('Line')
     feature_values = relationship('FeatureValue')
+    ngram_vectors = relationship('NGramVector')
     upcoming_bugs = relationship('UpcomingBugsForVersion')

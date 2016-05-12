@@ -34,8 +34,6 @@ def main():
         Config.dataset_train_end,
         Config.dataset_features,
         Config.dataset_target,
-        normalize=Config.ml_normalize,
-        poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Training",
         cache=Config.dataset_cache)
@@ -49,8 +47,6 @@ def main():
         Config.dataset_test_end,
         Config.dataset_features,
         Config.dataset_target,
-        normalize=Config.ml_normalize,
-        poly_degree=Config.dataset_polynomial_degree,
         use_ngrams=Config.dataset_use_ngrams,
         label="Test",
         cache=Config.dataset_cache)
@@ -60,6 +56,8 @@ def main():
     logging.info("Creating and training model with training dataset")
     model = Model.create_model(
         Config.ml_model,
+        feature_scaling=Config.ml_feature_scaling,
+        polynomial_degree=Config.ml_polynomial_degree,
         cross_validation=Config.ml_cross_validation,
         alpha=Config.ml_alpha,
         alpha_range=Config.ml_alpha_range,
@@ -119,7 +117,7 @@ def main():
         category_table = Reporting.get_category_table(test_dataset.target, test_prediction)
         add_to_report(category_table.table)
 
-        if Config.dataset_polynomial_degree == 1:
+        if Config.ml_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.
             try:
                 top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
@@ -209,6 +207,7 @@ def init_logging(log_file=None, log_level=None, log_override=None, log_format=No
         log_override (bool): Optional. If True the log file will overwritten for each run. Otherwise, logs get appended.
         log_format (str): Optional. The format string fo the log messages.
         log_date_format (str): Optional. The format string for the time info in log messages.
+        log_file_timestamp_format (str): Optional. The format string for the timestamp in the log file name.
     """
     if not log_file:
         log_file = Config.logging_file

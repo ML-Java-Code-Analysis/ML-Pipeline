@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # coding=utf-8
-import numpy as np
 import random
 
-from ml import Preprocessing
+import numpy as np
 
 
 def predict_mean(training_dataset, length):

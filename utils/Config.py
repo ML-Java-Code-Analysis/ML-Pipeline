@@ -38,13 +38,13 @@ dataset_train_start = None
 dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
-dataset_polynomial_degree = 1
 dataset_use_ngrams = False
 dataset_features = None
 
 # Machine learning options
 ml_model = None
-ml_normalize = False
+ml_feature_scaling = False
+ml_polynomial_degree = 1
 ml_alpha = None
 ml_alpha_range = None
 ml_C = None
@@ -98,19 +98,19 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
-    _read_option(config, dataset_section, 'polynomial_degree', value_type=TYPE_INT)
     _read_option(config, dataset_section, 'use_ngrams', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_STR_LIST)
 
-    dataset_section = "ML"
-    _read_option(config, dataset_section, 'model', optional=False)
-    _read_option(config, dataset_section, 'normalize', value_type=TYPE_BOOLEAN)
-    _read_option(config, dataset_section, 'alpha', value_type=TYPE_FLOAT)
-    _read_option(config, dataset_section, 'alpha_range', value_type=TYPE_FLOAT_LIST)
-    _read_option(config, dataset_section, 'C', target='ml_C', value_type=TYPE_FLOAT)
-    _read_option(config, dataset_section, 'C_range', target='ml_C_range', value_type=TYPE_FLOAT_LIST)
-    _read_option(config, dataset_section, 'cross_validation', value_type=TYPE_BOOLEAN)
-    _read_option(config, dataset_section, 'kernel')
+    ml_section = "ML"
+    _read_option(config, ml_section, 'model', optional=False)
+    _read_option(config, ml_section, 'polynomial_degree', value_type=TYPE_INT)
+    _read_option(config, ml_section, 'feature_scaling', value_type=TYPE_BOOLEAN)
+    _read_option(config, ml_section, 'alpha', value_type=TYPE_FLOAT)
+    _read_option(config, ml_section, 'alpha_range', value_type=TYPE_FLOAT_LIST)
+    _read_option(config, ml_section, 'C', target='ml_C', value_type=TYPE_FLOAT)
+    _read_option(config, ml_section, 'C_range', target='ml_C_range', value_type=TYPE_FLOAT_LIST)
+    _read_option(config, ml_section, 'cross_validation', value_type=TYPE_BOOLEAN)
+    _read_option(config, ml_section, 'kernel')
 
 
 TYPE_STR = 1

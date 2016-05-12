@@ -13,9 +13,8 @@ MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
 
 
-# TODO: Remove normalize
 # noinspection PyPep8Naming
-def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False, alpha=None,
+def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False, alpha=1.0,
                  alpha_range=None, C=None, C_range=None, kernel=None):
     """ Creates a new model of the specified type.
 
@@ -78,7 +77,7 @@ def create_svr_model(C=None, kernel=None):
     )
 
 
-def create_ridge_model(alpha=None):
+def create_ridge_model(alpha=1.0):
     return linear_model.Ridge(
         alpha=alpha,
         fit_intercept=True,

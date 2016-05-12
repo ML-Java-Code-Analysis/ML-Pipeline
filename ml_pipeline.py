@@ -60,7 +60,6 @@ def main():
     logging.info("Creating and training model with training dataset")
     model = Model.create_model(
         Config.ml_model,
-        normalize=Config.ml_normalize,
         cross_validation=Config.ml_cross_validation,
         alpha=Config.ml_alpha,
         alpha_range=Config.ml_alpha_range,
@@ -147,7 +146,6 @@ def main():
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
-                normalize=Config.ml_normalize,
                 alpha_range=Config.ml_alpha_range,
                 C_range=Config.ml_C_range,
                 kernel=Config.ml_kernel,
@@ -159,7 +157,6 @@ def main():
             Reporting.plot_learning_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
-                normalize=Config.ml_normalize,
                 cross_validation=Config.ml_cross_validation,
                 alpha=Config.ml_alpha,
                 alpha_range=Config.ml_alpha_range,

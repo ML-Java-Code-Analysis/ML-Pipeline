@@ -317,14 +317,14 @@ def get_category(value, categories):
     return categories[-1]
 
 
-def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, normalize=True, alpha_range=None,
-                          C_range=None, kernel=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
+def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha_range=None, C_range=None,
+                          kernel=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
     if not save and not display:
         return
 
     model_type = model_type.upper()
     if model_type == Model.MODEL_TYPE_RIDREG:
-        estimator = Model.create_ridge_model(normalize=normalize)
+        estimator = Model.create_ridge_model()
         param_name = "alpha"
         param_range = alpha_range
     elif model_type == Model.MODEL_TYPE_SVR:
@@ -370,15 +370,13 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, n
 
 
 def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
-                        normalize=False, cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None,
-                        C_range=None, kernel=None, n_jobs=-1, save=False, display=True, filename="learning_curve"):
+                        cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None, C_range=None,
+                        kernel=None, n_jobs=-1, save=False, display=True, filename="learning_curve"):
     if not save and not display:
         return
 
-    # TODO: Das Modell Muss OHNE CV erstellt werden, bereits mit dem idealen Parameter. Glaub.
     estimator = Model.create_model(
         model_type=model_type,
-        normalize=normalize,
         cross_validation=cross_validation,
         alpha=alpha,
         alpha_range=alpha_range,

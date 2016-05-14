@@ -7,6 +7,7 @@ from datetime import datetime
 
 import numpy as np
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.expression import text
 
 from model import DB
 from model.objects.Version import Version
@@ -193,8 +194,6 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
     # TODO: Order by feature, order by ngram size, level!
     logging.debug("Querying for Commits in repository with id %s and between %s and %s" % (repository.id, start, end))
     try:
-        # Load
-        # TODO: Fix this shit
         query = session.query(Commit). \
             options(joinedload(Commit.versions)). \
             options(joinedload('versions.file')). \
@@ -205,7 +204,7 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
             query = query.options(joinedload('versions.ngram_vectors'))
 
         query = query.filter(
-            "file_1.language = 'JAVA'", # Pretty much faked this one, but hey it works.
+            text("file_1.language = 'JAVA'"), # Pretty much faked this one, but hey it works.
             Commit.repository_id == repository.id,
             Commit.timestamp >= start,
             Commit.timestamp < end)

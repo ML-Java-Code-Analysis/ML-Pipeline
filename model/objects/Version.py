@@ -23,6 +23,8 @@ class Version(Base):
     # file_size = Column(Integer)
     # deleted = Column(Boolean)
     # lines = relationship('Line')
+    file = relationship('File', back_populates='versions')
+    commit = relationship('Commit', back_populates='versions')
     feature_values = relationship('FeatureValue')
     ngram_vectors = relationship('NGramVector')
     upcoming_bugs = relationship('UpcomingBugsForVersion')

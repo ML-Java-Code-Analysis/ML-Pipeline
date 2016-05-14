@@ -28,4 +28,4 @@ class Commit(Base):
     # project_file_count = Column(Integer)
     # complete = Column(Boolean)
     # issues = relationship("Issue", secondary=CommitIssue.__table__, back_populates="commits")
-    versions = relationship("Version")
+    versions = relationship("Version", back_populates='commit')

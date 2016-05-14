@@ -15,4 +15,4 @@ class File(Base):
     id = Column(String(36), primary_key=True)
     repository_id = Column(Integer, ForeignKey("repository.id"))
     language = Column(String(20))
-    versions = relationship("Version")
+    versions = relationship("Version", back_populates='file')

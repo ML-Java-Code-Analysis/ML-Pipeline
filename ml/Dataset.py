@@ -9,6 +9,8 @@ import numpy as np
 from sqlalchemy.orm import joinedload
 
 from model import DB
+from model.objects.Version import Version
+from model.objects.File import File
 from model.objects.Commit import Commit
 from model.objects.Repository import Repository
 
@@ -189,12 +191,13 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
     assert start < end, "The range start must be before the range end!"
     # TODO: Maybe filter here already for ngrams and vectors?
     # TODO: Order by feature, order by ngram size, level!
-    # TODO: NUR JAVA FILES REINNEHMEN!!!
     logging.debug("Querying for Commits in repository with id %s and between %s and %s" % (repository.id, start, end))
     try:
         # Load
+        # TODO: Fix this shit
         query = session.query(Commit). \
             options(joinedload(Commit.versions)). \
+            options(joinedload('versions.file')). \
             options(joinedload('versions.feature_values')). \
             options(joinedload('versions.upcoming_bugs'))
 
@@ -202,10 +205,11 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
             query = query.options(joinedload('versions.ngram_vectors'))
 
         query = query.filter(
+            "file_1.language = 'JAVA'", # Pretty much faked this one, but hey it works.
             Commit.repository_id == repository.id,
             Commit.timestamp >= start,
             Commit.timestamp < end)
-
+        logging.debug("Running query %s" % str(query))
         return query.all()
     except:
         logging.exception(

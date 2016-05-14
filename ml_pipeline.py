@@ -36,7 +36,8 @@ def main():
         Config.dataset_target,
         use_ngrams=Config.dataset_use_ngrams,
         label="Training",
-        cache=Config.dataset_cache)
+        cache=Config.dataset_cache,
+        eager_load=Config.database_eager_load)
     if train_dataset is None:
         die("Training Dataset could not be created!")
 
@@ -49,7 +50,8 @@ def main():
         Config.dataset_target,
         use_ngrams=Config.dataset_use_ngrams,
         label="Test",
-        cache=Config.dataset_cache)
+        cache=Config.dataset_cache,
+        eager_load=Config.database_eager_load)
     if test_dataset is None:
         die("Test Dataset could not be created!")
 

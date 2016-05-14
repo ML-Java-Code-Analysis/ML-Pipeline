@@ -10,6 +10,7 @@ database_user = None
 database_user_password = None
 database_host = 'localhost'
 database_port = None
+database_eager_load = False
 
 # Logging options
 logging_level = 'DEBUG'
@@ -70,6 +71,7 @@ def read_config(config_file):
     _read_option(config, database_section, 'user_password')
     _read_option(config, database_section, 'host')
     _read_option(config, database_section, 'port')
+    _read_option(config, database_section, 'eager_load', value_type=TYPE_BOOLEAN)
 
     logging_section = 'LOGGING'
     _read_option(config, logging_section, 'level')

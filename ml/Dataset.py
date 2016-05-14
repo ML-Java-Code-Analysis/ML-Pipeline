@@ -46,7 +46,7 @@ class Dataset:
 
 
 def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=False, label="", cache=False,
-                cache_directory=None):
+                cache_directory=None, eager_load=False):
     """ Reads a dataset from a repository in a specific time range.
 
     If cache=True, the dataset will be read from a file, if one exists. If not, after reading from the DB, it will
@@ -61,6 +61,7 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
         label (str): The label to be assigned to the dataset.
         cache (bool): If True, caching will be used.
         cache_directory (bool): Optional. The directory path for the cache files. If None, the working dir will be used.
+        eager_load (bool): If true, all data will be loaded eagerly. This reduces database calls, but uses a lot of RAM.
 
     Returns:
         Dataset: The populated dataset.
@@ -73,7 +74,7 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
             return dataset
 
     dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams,
-                                  label=label)
+                                  label=label, eager_load=eager_load)
 
     if dataset is not None and cache:
         save_dataset_file(dataset, cache_directory)
@@ -82,7 +83,7 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
 
 
 def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams=False, ngram_sizes=None,
-                        ngram_levels=None, label=""):
+                        ngram_levels=None, label="", eager_load=False):
     """ Reads a dataset from a repository in a specific time range
 
     Args:
@@ -92,6 +93,7 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
         feature_list (list[str]): A list of the feature-IDs to be read into the dataset.
         target_id (str): The ID of the target. Use a TARGET_X constant from UpcomingBugsForVersion
         label (str): The label to be assigned to the dataset.
+        eager_load (bool): If true, all data will be loaded eagerly. This reduces database calls, but uses a lot of RAM.
 
     Returns:
         Dataset: The populated dataset.
@@ -105,12 +107,12 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
             logging.error("Repository with name %s not found! Returning no Dataset" % repository_name)
             return None
 
-    commits = get_commits_in_range(session, repository, start, end, use_ngrams=use_ngrams)
+    commits = get_commits_in_range(session, repository, start, end,
+                                   eager_load_ngrams=use_ngrams and eager_load, eager_load_features=eager_load)
     if commits is None:
         logging.error("Could not retrieve commits! Returning no Dataset")
         return None
     logging.debug("Commits received.")
-    session.close()
 
     if len(commits) == 0:
         logging.error("No Commits found!")
@@ -154,6 +156,7 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
                 pass
         i += 1
 
+    session.close()
     return dataset
 
 
@@ -177,7 +180,7 @@ def get_repository_by_name(session, name):
     return repository
 
 
-def get_commits_in_range(session, repository, start, end, use_ngrams=False):
+def get_commits_in_range(session, repository, start, end, eager_load_features=False, eager_load_ngrams=False):
     """ Retrieves Commits with eagerly loaded versions, feature_values and upcoming_bugs.
 
     Args:
@@ -185,6 +188,8 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
         repository (Repository): The repository from which to retrieve the commits.
         start (datetime): The earliest commit to retrieve.
         end (datetime): The latest commit to retrieve.
+        eager_load_features (bool): If feature values should be joined eagerly. Might use a lot of memory
+        eager_load_ngrams (bool): If ngram values should be joined eagerly. Might use a lot of memory
 
     Returns:
         List[Commit] A list of commits. None, if something went wrong.
@@ -197,14 +202,16 @@ def get_commits_in_range(session, repository, start, end, use_ngrams=False):
         query = session.query(Commit). \
             options(joinedload(Commit.versions)). \
             options(joinedload('versions.file')). \
-            options(joinedload('versions.feature_values')). \
             options(joinedload('versions.upcoming_bugs'))
 
-        if use_ngrams:
+        if eager_load_features:
+            query = query.options(joinedload('versions.feature_values'))
+
+        if eager_load_ngrams:
             query = query.options(joinedload('versions.ngram_vectors'))
 
         query = query.filter(
-            text("file_1.language = 'JAVA'"), # Pretty much faked this one, but hey it works.
+            text("file_1.language = 'JAVA'"),  # Pretty much faked this one, but hey it works.
             Commit.repository_id == repository.id,
             Commit.timestamp >= start,
             Commit.timestamp < end)

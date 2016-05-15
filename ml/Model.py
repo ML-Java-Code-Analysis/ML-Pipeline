@@ -86,10 +86,12 @@ def create_ridge_model(alpha=1.0):
 
 
 def create_ridge_cv_model(alpha_range=None, cv=5):
-    return linear_model.RidgeCV(
-        alphas=alpha_range,
+    return GridSearchCV(
+        estimator=create_ridge_model(0),
+        param_grid=dict(alpha=alpha_range),
+        iid=False,
         cv=cv,
-    )
+        n_jobs=-1)
 
 
 def create_linear_regression_model():

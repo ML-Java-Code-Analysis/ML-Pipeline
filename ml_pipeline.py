@@ -3,6 +3,13 @@
 import logging
 import argparse
 import datetime
+import platform
+
+if platform.system() == 'Linux':
+    import matplotlib
+
+    # Force matplotlib to not use any Xwindows backend.
+    matplotlib.use('Agg')
 
 from ml import Dataset, Model, Predict, Scoreboard
 from ml import Reporting
@@ -12,6 +19,7 @@ from utils import Config
 from utils.Config import ConfigError
 
 report_str = ""
+
 
 def main():
     cli_args = parse_arguments()
@@ -174,7 +182,7 @@ def main():
 
 def add_to_report(string, line_breaks=2):
     global report_str
-    report_str += "\n"*line_breaks + str(string)
+    report_str += "\n" * line_breaks + str(string)
 
 
 def die(message=None):

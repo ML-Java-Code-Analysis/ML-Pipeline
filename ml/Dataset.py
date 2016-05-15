@@ -37,7 +37,7 @@ class Dataset:
         ngram_count = 0
         if ngram_sizes and ngram_levels:
             ngram_count = len(ngram_sizes) * len(ngram_levels)
-        logging.debug("Initializing Dataset with  %i versions, %i features and %i ngrams." % (
+        logging.debug("Initializing Dataset with  %i versions, %i features and %i ngram vectors." % (
             version_count, total_feature_count, ngram_count))
 
         self.data = np.zeros((version_count, total_feature_count + ngram_count))
@@ -153,7 +153,8 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
     if use_ngrams:
         ngrams = get_ngram_vector_list(versions[0], ngram_sizes, ngram_levels)
         ngram_count = sum([ngram.vector_size for ngram in ngrams])
-        logging.debug("%i total ngrams." % ngram_count)
+        logging.debug("Ngram sizes %s and levels %s amount to %i total ngrams." % (
+            str(ngram_sizes), str(ngram_levels), ngram_count))
 
     dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, ngram_sizes,
                       ngram_levels, label)

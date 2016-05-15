@@ -10,14 +10,13 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
 
 from model import DB
-from model.objects.Version import Version
-from model.objects.File import File
 from model.objects.Commit import Commit
 from model.objects.Repository import Repository
 
 
 class Dataset:
-    def __init__(self, feature_count, version_count, feature_list, target_id, start, end, has_ngrams, label=""):
+    def __init__(self, total_feature_count, version_count, feature_list, target_id, start, end,
+                 ngram_sizes=None, ngram_levels=None, label=""):
         """" Initialize an empty dataset.
 
         A dataset consists of two components:
@@ -26,31 +25,43 @@ class Dataset:
         - The target attribute is a vector containing the ground truth. It's size is version_count.
 
         Args:
-            feature_count (int): Amount of features. Equals the columns of the data matrix.
-            version_count (int): Amount of versions. Equals the rows of the data matrix and target vector.
+            total_feature_count (int): Amount of versions (and ngrams). Equals the rows of the data and target matrix.
             feature_list (List[str]): A list of Feature IDs. Must be in the same order as they are in the dataset.
             target_id (str): ID of the target which is used in this dataset. E.g. 'month'
             start (datetime): Start of the date range contained in this dataset.
             end (datetime): End of the date range contained in this dataset.
+            ngram_sizes (list[int]): Optional. The ngram-sizes in this dataset (e.g. [1, 2] for 1-grams and 2-grams)
+            ngram_levels (list[int]): Optional. The ngram-levels in this dataset.
             label (str): An arbitrary label, e.g. "Test", for this dataset. Useful when caching!
         """
-        logging.debug("Initializing Dataset with %i features and %i versions." % (feature_count, version_count))
-        self.data = np.zeros((version_count, feature_count))
+        ngram_count = 0
+        if ngram_sizes and ngram_levels:
+            ngram_count = len(ngram_sizes) * len(ngram_levels)
+        logging.debug("Initializing Dataset with  %i versions, %i features and %i ngrams." % (
+            version_count, total_feature_count, ngram_count))
+
+        self.data = np.zeros((version_count, total_feature_count + ngram_count))
         self.target = np.zeros(version_count)
         self.feature_list = feature_list
         self.target_id = target_id
         self.start = start
         self.end = end
-        self.has_ngrams = has_ngrams
+        self.ngram_sizes = ngram_sizes
+        self.ngram_levels = ngram_levels
         self.label = label
 
+    def has_ngrams(self):
+        """ True if this dataset contains ngrams. Must have at least one ngram size and level."""
+        return self.ngram_sizes and self.ngram_levels
 
-def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=False, label="", cache=False,
-                cache_directory=None, eager_load=False):
+
+def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=None, ngram_levels=None, label="",
+                cache=False, cache_directory=None, eager_load=False):
     """ Reads a dataset from a repository in a specific time range.
 
     If cache=True, the dataset will be read from a file, if one exists. If not, after reading from the DB, it will
     be saved to a *.dataset file.
+    For NGrams to be loaded into the dataset, there must be at least one ngram size and level specified.
 
     Args:
         repository (Repository): The repository to query. Can also be its name as a string
@@ -58,6 +69,8 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
         end (datetime): The end range for the dataset
         feature_list (list[str]): A list of the feature-IDs to be read into the dataset.
         target_id (str): The ID of the target. Use a TARGET_X constant from UpcomingBugsForVersion
+        ngram_sizes (list[int]): Optional. The ngram-sizes to be loaded in the set (e.g. [1, 2] for 1-grams and 2-grams)
+        ngram_levels (list[int]): Optional. The ngram-levels to be loaded in the dataset.
         label (str): The label to be assigned to the dataset.
         cache (bool): If True, caching will be used.
         cache_directory (bool): Optional. The directory path for the cache files. If None, the working dir will be used.
@@ -69,11 +82,12 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
     if cache and not cache_directory:
         cache_directory = os.getcwd()
     if cache:
-        dataset = load_dataset_file(cache_directory, label, feature_list, target_id, start, end, use_ngrams)
+        dataset = load_dataset_file(cache_directory, label, feature_list, target_id, start, end, ngram_sizes,
+                                    ngram_levels)
         if dataset is not None:
             return dataset
 
-    dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams,
+    dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_sizes, ngram_levels,
                                   label=label, eager_load=eager_load)
 
     if dataset is not None and cache:
@@ -82,8 +96,8 @@ def get_dataset(repository, start, end, feature_list, target_id, use_ngrams=Fals
     return dataset
 
 
-def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngrams=False, ngram_sizes=None,
-                        ngram_levels=None, label="", eager_load=False):
+def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_sizes=None, ngram_levels=None, label="",
+                        eager_load=False):
     """ Reads a dataset from a repository in a specific time range
 
     Args:
@@ -92,12 +106,20 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
         end (datetime): The end range
         feature_list (list[str]): A list of the feature-IDs to be read into the dataset.
         target_id (str): The ID of the target. Use a TARGET_X constant from UpcomingBugsForVersion
+        ngram_sizes (list[int]): Optional. The ngram-sizes to be loaded in the set (e.g. [1, 2] for 1-grams and 2-grams)
+        ngram_levels (list[int]): Optional. The ngram-levels to be loaded in the dataset.
         label (str): The label to be assigned to the dataset.
         eager_load (bool): If true, all data will be loaded eagerly. This reduces database calls, but uses a lot of RAM.
 
     Returns:
         Dataset: The populated dataset.
     """
+    if ngram_sizes and type(ngram_sizes) != list:
+        ngram_sizes = [ngram_sizes]
+    if ngram_levels and type(ngram_levels) != list:
+        ngram_sizes = [ngram_levels]
+    use_ngrams = True if ngram_sizes and ngram_levels else False
+
     session = DB.create_session()
 
     if type(repository) is str:
@@ -108,7 +130,8 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
             return None
 
     commits = get_commits_in_range(session, repository, start, end,
-                                   eager_load_ngrams=use_ngrams and eager_load, eager_load_features=eager_load)
+                                   eager_load_ngrams=use_ngrams and eager_load,
+                                   eager_load_features=eager_load)
     if commits is None:
         logging.error("Could not retrieve commits! Returning no Dataset")
         return None
@@ -128,14 +151,12 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
 
     ngram_count = 0
     if use_ngrams:
-        for ngram_vector in versions[0].ngram_vectors:
-            if ngram_sizes is None or ngram_vector.ngram_size in ngram_sizes \
-                    and ngram_levels is None or ngram_vector.ngram_level in ngram_levels:
-                ngram_count += ngram_vector.vector_size
+        ngrams = get_ngram_vector_list(versions[0], ngram_sizes, ngram_levels)
+        ngram_count = sum([ngram.vector_size for ngram in ngrams])
         logging.debug("%i total ngrams." % ngram_count)
 
-    dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, use_ngrams,
-                      label)
+    dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, ngram_sizes,
+                      ngram_levels, label)
     i = 0
     for version in versions:
         if len(version.upcoming_bugs) == 0:
@@ -144,17 +165,22 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, use_ngr
         if target is None:
             raise Exception("Upcoming_bugs entry of Version %s has no target %s!" % (version.id, target))
         dataset.target[i] = target
+
         j = 0
-        print(version.id + "\t" + str([x.feature_id for x in version.feature_values]))
         for feature_value in version.feature_values:
             if feature_value.feature_id in feature_list:
                 dataset.data[i][j] = feature_value.value
                 j += 1
-        for ngram_vector in version.ngram_vectors:
-            if ngram_sizes is None or ngram_vector.ngram_size in ngram_sizes \
-                    and ngram_levels is None or ngram_vector.ngram_level in ngram_levels:
-                pass
+        for ngram_vector in get_ngram_vector_list(version, ngram_sizes, ngram_levels):
+            for ngram_value in ngram_vector.ngram_values.split(','):
+                dataset.data[i][j] = int(ngram_value)
+                j += 1
+
+        if i % 100 == 0:
+            logging.info("{0:.2f}% of versions processed.".format(i / len(versions) * 100))
+
         i += 1
+    logging.info("All versions processed.")
 
     session.close()
     return dataset
@@ -195,8 +221,6 @@ def get_commits_in_range(session, repository, start, end, eager_load_features=Fa
         List[Commit] A list of commits. None, if something went wrong.
     """
     assert start < end, "The range start must be before the range end!"
-    # TODO: Maybe filter here already for ngrams and vectors?
-    # TODO: Order by feature, order by ngram size, level!
     logging.debug("Querying for Commits in repository with id %s and between %s and %s" % (repository.id, start, end))
     try:
         query = session.query(Commit). \
@@ -207,11 +231,12 @@ def get_commits_in_range(session, repository, start, end, eager_load_features=Fa
         if eager_load_features:
             query = query.options(joinedload('versions.feature_values'))
 
-        if eager_load_ngrams:
+        if eager_load_ngrams or True:
             query = query.options(joinedload('versions.ngram_vectors'))
 
         query = query.filter(
             text("file_1.language = 'JAVA'"),  # Pretty much faked this one, but hey it works.
+            text("version_1.deleted = 0"),
             Commit.repository_id == repository.id,
             Commit.timestamp >= start,
             Commit.timestamp < end)
@@ -221,6 +246,24 @@ def get_commits_in_range(session, repository, start, end, eager_load_features=Fa
         logging.exception(
             "Could not retrieve dataset from Repository %s in range %s to %s" % (repository.name, start, end))
         return None
+
+
+def _is_ngram_vector_relevant(ngram_vector, ngram_sizes, ngram_levels):
+    return ngram_vector.ngram_size in ngram_sizes and ngram_vector.ngram_level in ngram_levels
+
+
+def get_ngram_vector_list(version, ngram_sizes, ngram_levels):
+    """ Extracts an ordered list of ngram vectors from a version. It is ordered by ngram size first, levels second.
+
+    Args:
+        version (model.objects.Version.Version): The version from which to extract the ngrams.
+        ngram_sizes (list[int]): The ngram sizes which should be put into the list.
+        ngram_levels (list[int]): The ngram levels which should be put into the list.
+    """
+    return sorted(
+        filter(lambda vector: _is_ngram_vector_relevant(vector, ngram_sizes, ngram_levels), version.ngram_vectors),
+        key=lambda vector: (vector.ngram_size, vector.ngram_level)
+    )
 
 
 def hash_features(feature_list):
@@ -234,16 +277,19 @@ def hash_features(feature_list):
 def generate_filename_for_dataset(dataset, strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     return generate_filename(dataset.label, dataset.feature_list, dataset.target_id, dataset.start, dataset.end,
-                             dataset.has_ngrams, strftime_format)
+                             dataset.ngram_sizes, dataset.ngram_levels, strftime_format)
 
 
-def generate_filename(label, feature_list, target_id, start, end, use_ngrams,
+def generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels,
                       strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     feature_hash = hash_features(feature_list)
     start_str = start.strftime(strftime_format)
     end_str = end.strftime(strftime_format)
-    ngram_str = "ngram" if use_ngrams else "nongram"
+    if ngram_levels and ngram_sizes:
+        ngram_str = "ngrams_" + "-".join([str(x) for x in ngram_sizes]) + "_" + "-".join([str(x) for x in ngram_sizes])
+    else:
+        ngram_str = "ngrams_no"
     return "_".join(
         [label, start_str, end_str, target_id, ngram_str, feature_hash]) + ".dataset"
 
@@ -269,7 +315,8 @@ def save_dataset_file(dataset, directory):
     logging.debug("Saving successful")
 
 
-def load_dataset_file(directory, label, feature_list, target_id, start, end, use_ngrams, strftime_format="%Y_%m_%d"):
+def load_dataset_file(directory, label, feature_list, target_id, start, end, ngram_sizes, ngram_levels,
+                      strftime_format="%Y_%m_%d"):
     """ Load a dataset from a cache file.
 
     Args:
@@ -279,13 +326,14 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, use
         target_id (str): The ID of the target the dataset should contain.
         start (datetime): The start of the range the dataset should contain.
         end (datetime): The end of the range the dataset should contain.
+        ngram_sizes (list[int]): Optional. The ngram-sizes in this dataset (e.g. [1, 2] for 1-grams and 2-grams)
+        ngram_levels (list[int]): Optional. The ngram-levels in this dataset.
         strftime_format (str): Optional. The datetime string format.
 
     Returns:
         Dataset: The dataset, if one was retrieved. Otherwise None.
     """
-    filename = generate_filename(label, feature_list, target_id, start, end, use_ngrams,
-                                 strftime_format)
+    filename = generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels, strftime_format)
     filepath = os.path.join(directory, filename)
     logging.debug("Attempting to load cached dataset from %s" % filepath)
     if os.path.isfile(filepath):
@@ -295,7 +343,8 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, use
 
         logging.debug(
             "Successfully retrieved data %s and target %s from cache file." % (str(data.shape), str(target.shape)))
-        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, use_ngrams, label)
+        dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, ngram_sizes, ngram_levels,
+                          label)
         dataset.data = data
         dataset.target = target.T[0]
         return dataset

@@ -21,7 +21,7 @@ class Version(Base):
     # lines_added = Column(Integer, nullable=False)
     # lines_deleted = Column(Integer, nullable=False)
     # file_size = Column(Integer)
-    # deleted = Column(Boolean)
+    deleted = Column(Boolean)
     # lines = relationship('Line')
     file = relationship('File', back_populates='versions')
     commit = relationship('Commit', back_populates='versions')

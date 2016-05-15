@@ -15,8 +15,8 @@ entries = set()
 
 class ScoreboardEntry:
     def __init__(self, label, evs, mse, mae, mde, r2s, repository_name, ml_model, ml_feature_scaling,
-                 ml_polynomial_degree, dataset_use_ngrams, dataset_target, dataset_train_start, dataset_train_end,
-                 dataset_test_start, dataset_test_end,
+                 ml_polynomial_degree, dataset_ngram_sizes, dataset_ngram_levels, dataset_target, dataset_train_start,
+                 dataset_train_end, dataset_test_start, dataset_test_end,
                  dataset_features):
         self.label = label
         self.evs = float(evs)
@@ -28,7 +28,8 @@ class ScoreboardEntry:
         self.ml_model = ml_model
         self.ml_feature_scaling = ml_feature_scaling
         self.ml_polynomial_degree = ml_polynomial_degree
-        self.dataset_use_ngrams = dataset_use_ngrams
+        self.dataset_ngram_sizes = dataset_ngram_sizes
+        self.dataset_ngram_levels = dataset_ngram_levels
         self.dataset_target = dataset_target
         self.dataset_train_start = dataset_train_start
         self.dataset_train_end = dataset_train_end
@@ -66,7 +67,8 @@ def create_entry_from_config(report):
         Config.ml_model,
         Config.ml_feature_scaling,
         Config.ml_polynomial_degree,
-        Config.dataset_use_ngrams,
+        Config.dataset_ngram_sizes,
+        Config.dataset_ngram_levels,
         Config.dataset_target,
         Config.dataset_train_start,
         Config.dataset_train_end,
@@ -114,7 +116,8 @@ def parse_entry_to_string(scoreboard_entry):
         str(scoreboard_entry.ml_model),
         str(scoreboard_entry.ml_feature_scaling),
         str(scoreboard_entry.ml_polynomial_degree),
-        str(scoreboard_entry.dataset_use_ngrams),
+        str(scoreboard_entry.dataset_ngram_sizes),
+        str(scoreboard_entry.dataset_ngram_levels),
         str(scoreboard_entry.dataset_target),
         str(scoreboard_entry.dataset_train_start),
         str(scoreboard_entry.dataset_train_end),

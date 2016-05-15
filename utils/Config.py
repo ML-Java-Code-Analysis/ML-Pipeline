@@ -39,7 +39,8 @@ dataset_train_start = None
 dataset_train_end = None
 dataset_test_start = None
 dataset_test_end = None
-dataset_use_ngrams = False
+dataset_ngram_sizes = None
+dataset_ngram_levels = None
 dataset_features = None
 
 # Machine learning options
@@ -100,7 +101,8 @@ def read_config(config_file):
     _read_option(config, dataset_section, 'train_end', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_start', optional=False, value_type=TYPE_DATE)
     _read_option(config, dataset_section, 'test_end', optional=False, value_type=TYPE_DATE)
-    _read_option(config, dataset_section, 'use_ngrams', value_type=TYPE_BOOLEAN)
+    _read_option(config, dataset_section, 'ngram_sizes', value_type=TYPE_INT_LIST)
+    _read_option(config, dataset_section, 'ngram_levels', value_type=TYPE_INT_LIST)
     _read_option(config, dataset_section, 'features', optional=False, value_type=TYPE_STR_LIST)
 
     ml_section = "ML"
@@ -122,6 +124,7 @@ TYPE_BOOLEAN = 4
 TYPE_DATE = 5
 TYPE_STR_LIST = 6
 TYPE_FLOAT_LIST = 7
+TYPE_INT_LIST = 8
 
 
 def _read_option(config, section, option, value_type=TYPE_STR, target=None, optional=True, date_format='%Y.%m.%d'):
@@ -156,6 +159,9 @@ def _read_option(config, section, option, value_type=TYPE_STR, target=None, opti
         elif value_type == TYPE_FLOAT_LIST:
             value = config.get(section, option)
             value = [float(item.strip()) for item in value.split(',')]
+        elif value_type == TYPE_INT_LIST:
+            value = config.get(section, option)
+            value = [int(item.strip()) for item in value.split(',')]
         else:
             raise ValueError("No valid Type provided")
 

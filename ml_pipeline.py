@@ -34,7 +34,8 @@ def main():
         Config.dataset_train_end,
         Config.dataset_features,
         Config.dataset_target,
-        use_ngrams=Config.dataset_use_ngrams,
+        ngram_sizes=Config.dataset_ngram_sizes,
+        ngram_levels=Config.dataset_ngram_levels,
         label="Training",
         cache=Config.dataset_cache,
         eager_load=Config.database_eager_load)
@@ -48,7 +49,8 @@ def main():
         Config.dataset_test_end,
         Config.dataset_features,
         Config.dataset_target,
-        use_ngrams=Config.dataset_use_ngrams,
+        ngram_sizes=Config.dataset_ngram_sizes,
+        ngram_levels=Config.dataset_ngram_levels,
         label="Test",
         cache=Config.dataset_cache,
         eager_load=Config.database_eager_load)

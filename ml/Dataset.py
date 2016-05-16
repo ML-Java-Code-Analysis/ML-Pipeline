@@ -172,10 +172,11 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
             if feature_value.feature_id in feature_list:
                 dataset.data[i][j] = feature_value.value
                 j += 1
-        for ngram_vector in get_ngram_vector_list(version, ngram_sizes, ngram_levels):
-            for ngram_value in ngram_vector.ngram_values.split(','):
-                dataset.data[i][j] = int(ngram_value)
-                j += 1
+        if use_ngrams:
+            for ngram_vector in get_ngram_vector_list(version, ngram_sizes, ngram_levels):
+                for ngram_value in ngram_vector.ngram_values.split(','):
+                    dataset.data[i][j] = int(ngram_value)
+                    j += 1
 
         if i % 100 == 0:
             logging.info("{0:.2f}% of versions processed.".format(i / len(versions) * 100))
@@ -261,6 +262,8 @@ def get_ngram_vector_list(version, ngram_sizes, ngram_levels):
         ngram_sizes (list[int]): The ngram sizes which should be put into the list.
         ngram_levels (list[int]): The ngram levels which should be put into the list.
     """
+    if not ngram_sizes and not ngram_levels:
+        return None
     return sorted(
         filter(lambda vector: _is_ngram_vector_relevant(vector, ngram_sizes, ngram_levels), version.ngram_vectors),
         key=lambda vector: (vector.ngram_size, vector.ngram_level)

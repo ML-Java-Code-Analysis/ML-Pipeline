@@ -262,15 +262,22 @@ def get_top_features_table(model, features, n):
     Returns:
         (Table): A table with the data.
     """
-    sorted_enum = sorted(enumerate(model.coef_), key=lambda x: abs(x[1]), reverse=True)
-    n = min(n, len(sorted_enum))
+    for step in model.steps:
+        _model = step[1]
+        if hasattr(_model, 'coef_'):
+            try:
+                sorted_enum = sorted(enumerate(_model.coef_), key=lambda x: abs(x[1]), reverse=True)
+                n = min(n, len(sorted_enum))
 
-    table_data = [["Coefficient", "Feature"]]
-    for idx, coef in sorted_enum[:n]:
-        table_data.append([_format_float(coef), features[idx]])
-    table = Table(table_data)
-    table.title = "Top weighted features"
-    return table
+                table_data = [["Coefficient", "Feature"]]
+                for idx, coef in sorted_enum[:n]:
+                    table_data.append([_format_float(coef), features[idx]])
+                table = Table(table_data)
+                table.title = "Top weighted features"
+                return table
+            except:
+                pass
+    return None
 
 
 def get_category_table(ground_truth, predicted, categories=None):

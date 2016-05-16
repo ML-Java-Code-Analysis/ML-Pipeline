@@ -262,10 +262,13 @@ def get_top_features_table(model, features, n):
     Returns:
         (Table): A table with the data.
     """
+    logging.debug("Calculating top features.")
     for step in model.steps:
         _model = step[1]
+        logging.debug("Trying to get top features from step " + step[0])
         if hasattr(_model, 'coef_'):
             try:
+                logging.debug("Step %s has %i coefficients." % (step[0], len(_model.coef_)))
                 sorted_enum = sorted(enumerate(_model.coef_), key=lambda x: abs(x[1]), reverse=True)
                 n = min(n, len(sorted_enum))
 

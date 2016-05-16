@@ -136,7 +136,7 @@ def main():
 
         if Config.ml_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.
-            top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 5)
+            top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 10)
             if top_features_table is not None:
                 add_to_report(top_features_table.table)
 

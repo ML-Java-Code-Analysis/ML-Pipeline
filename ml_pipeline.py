@@ -126,7 +126,12 @@ def main():
             [Reporting.SCORE_R2S, Reporting.SCORE_MAE, Reporting.SCORE_MDE])
         add_to_report(comparisation_table.table)
 
-        category_table = Reporting.get_category_table(test_dataset.target, test_prediction)
+        category_table = Reporting.get_category_table(
+            train_dataset.target, training_prediction, label="Training prediction")
+        add_to_report(category_table.table)
+
+        category_table = Reporting.get_category_table(
+            test_dataset.target, test_prediction, label="Test prediction")
         add_to_report(category_table.table)
 
         if Config.ml_polynomial_degree == 1:

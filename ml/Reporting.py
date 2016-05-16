@@ -280,7 +280,7 @@ def get_top_features_table(model, features, n):
     return None
 
 
-def get_category_table(ground_truth, predicted, categories=None):
+def get_category_table(ground_truth, predicted, categories=None, label=None):
     if categories is None:
         categories = [0, 1, 2, 4]
     hits = {}
@@ -312,6 +312,8 @@ def get_category_table(ground_truth, predicted, categories=None):
     table_data.append(["Total", str(total_hits), str(total_misses), str(total_hits + total_misses)])
     table = Table(table_data)
     table.title = "Categoric rating"
+    if label:
+        table.title += ": " + label
     table.inner_footing_row_border = True
     return table
 

@@ -12,6 +12,11 @@ MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
 
+KERNEL_LINEAR= 'linear'
+KERNEL_POLYNOMIAL = 'polynomial'
+KERNEL_RBF = 'rbf'
+KERNEL_SIGMOID = 'sigmoid'
+
 
 # noinspection PyPep8Naming
 def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False, alpha=1.0,
@@ -73,7 +78,7 @@ def create_svr_model(C=None, kernel=None):
     return svm.SVR(
         kernel=kernel,
         C=C,
-        cache_size=8000,
+        cache_size=8000
     )
 
 

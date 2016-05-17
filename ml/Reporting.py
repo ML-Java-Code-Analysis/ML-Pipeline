@@ -378,7 +378,7 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, a
     if display:
         plt.show()
     if save:
-        plt.savefig(filename + ".png", dpi=400)
+        plt.savefig(filename + "_" + datetime.now().strftime("%Y_%m_%d_%H_%M") + ".png", dpi=400)
 
 
 def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
@@ -429,4 +429,4 @@ def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1
     if display:
         plt.show()
     if save:
-        plt.savefig(filename + ".png", dpi=400)
+        plt.savefig(filename + "_" + datetime.now().strftime("%Y_%m_%d_%H_%M") + ".png", dpi=400)

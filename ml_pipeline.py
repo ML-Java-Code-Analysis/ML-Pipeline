@@ -155,6 +155,13 @@ def main():
         if Config.reporting_save:
             Reporting.save_report_file(report_str, filename=Config.reporting_file)
 
+        if Config.reporting_target_histogram:
+            Reporting.plot_target_histogram(
+                train_dataset,
+                display=Config.reporting_display_charts,
+                save=Config.reporting_save_charts,
+            )
+
         if Config.reporting_validation_curve:
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,

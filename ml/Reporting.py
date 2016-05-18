@@ -332,16 +332,66 @@ def get_category(value, categories):
 
 def get_config_table():
     config_attrs = [attr for attr in dir(Config) if
-                    not callable(getattr(Config, attr)) and # No functions please
-                    not attr.startswith("_") and            # No internal/private attributes
-                    not attr.isupper() and                  # No constants
-                    not attr.startswith('database')         # Database config is not so relevant
+                    not callable(getattr(Config, attr)) and  # No functions please
+                    not attr.startswith("_") and             # No internal/private attributes
+                    not attr.isupper() and                   # No constants
+                    not attr.startswith('database') and      # Database config is not so relevant
+                    not attr.startswith('reporting')         # Reporting config is not so relevant
                     ]
 
     table_data = [["Attribute", "Value"]] + [[attr, str(getattr(Config, attr))] for attr in config_attrs]
     table = Table(table_data)
     table.title = "Configuration"
     return table
+
+
+def plot_target_histogram(dataset, save=False, display=True, filename='target_histogram'):
+    """ Plots a histogram of the datasets target vector and also displays a logarithmic curve of it.
+
+    Args:
+        dataset(ml.Dataset.Dataset): The dataset from which to plot the taret.
+        save (bool): If the plot should be saved.
+        display (bool): If the plot should be displayed
+        filename (str): The filename to be used when the plot is saved. Without extension.
+    """
+    histogram = {}
+
+    for value in dataset.target.ravel():
+        histogram[value] = histogram.get(value, 0) + 1
+
+    x = np.arange(len(histogram.keys()))
+    y = [histogram[key] for key in sorted(histogram.keys())]
+    y_log = np.log(y)
+
+    fig, ax1 = plt.subplots()
+
+    # Histogram bar plot
+    ax1.bar(x, y, align='center', label='Target data')
+
+    ax1.set_ylim(0, max(histogram.values()))
+    ax1.set_xlim(0, max(histogram.keys()))
+    ax1.set_xlabel("Bugs per " + dataset.target_id.lower())
+    ax1.set_ylabel("Sample Count")
+    ax1.legend(loc=1)
+
+    # Plot Log curve
+    ax2 = ax1.twinx()
+    ax2.plot(x, y_log, '-o', color='red', label='Logarithmic trend')
+    ax2.set_ylim(0, max(y_log))
+    ax2.set_xlim(0, max(histogram.keys()))
+    ax2.legend(loc=4)
+
+    title = 'Target Histogram'
+    if dataset.label:
+        title += " (" + dataset.label + " Set)"
+    plt.title(title)
+    plt.grid(True)
+
+    if display:
+        plt.show()
+    if save:
+        plt.savefig(filename + "_" + datetime.now().strftime("%Y_%m_%d_%H_%M") + ".png", dpi=400)
+    plt.clf()
 
 
 def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha_range=None, C_range=None,

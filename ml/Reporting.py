@@ -19,6 +19,7 @@ from terminaltables import AsciiTable as Table
 # TODO: Beispiele Versionen (als liste übergeben oder so)
 # TODO: Score im Verhältnis zu z.B. Alter der Files setzen oder zum Alter des Repos
 from ml import Model
+from utils import Config
 
 SCORE_EVS = "evs"  # Explained Variance Score
 SCORE_MSE = "mse"  # Mean Equared Error
@@ -224,16 +225,16 @@ def get_report_comparisation_table(reports, score_attrs=SCORE_R2S):
 
 
 def save_report_file(content, filename="report", timestamp=True, file_ext="txt", directory=None,
-                     timestamp_format="%Y_%m_%d_%H_%M"):
-    """
+                     timestamp_format="%Y_%m_%d_%H_%M", config=True):
+    """ Saves a report string to a file.
 
     Args:
-        content:
-        filename:
-        timestamp:
-        file_ext:
-        directory:
-        timestamp_format:
+        content (str): The report data as a string.
+        filename (str): The filename to use (without extension)
+        timestamp (bool): If a timestamp should be appended to the filename.
+        file_ext (str): The file extension to use.
+        directory (str): The directory path to save the file in. If None, the working dir will be used.
+        timestamp_format (str): The strftime format for the timestamp, which will be appended to the filename.
     """
     if not directory:
         directory = os.getcwd()
@@ -327,6 +328,20 @@ def get_category(value, categories):
         if value < categories[i + 1]:
             return category
     return categories[-1]
+
+
+def get_config_table():
+    config_attrs = [attr for attr in dir(Config) if
+                    not callable(getattr(Config, attr)) and # No functions please
+                    not attr.startswith("_") and            # No internal/private attributes
+                    not attr.isupper() and                  # No constants
+                    not attr.startswith('database')         # Database config is not so relevant
+                    ]
+
+    table_data = [["Attribute", "Value"]] + [[attr, str(getattr(Config, attr))] for attr in config_attrs]
+    table = Table(table_data)
+    table.title = "Configuration"
+    return table
 
 
 def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha_range=None, C_range=None,

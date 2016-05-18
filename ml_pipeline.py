@@ -112,8 +112,8 @@ def main():
     test_ranking = Scoreboard.get_ranking(test_entry, Scoreboard.RATING_ATTRIBUTE_R2S)
 
     if Config.reporting_display or Config.reporting_save:
-        # TODO: Also print some of the relevant config!
-        # Or just the whole config!
+        config_table = Reporting.get_config_table()
+        add_to_report(config_table.table)
 
         add_to_report(baseline_mean_report)
         add_to_report(baseline_med_report)

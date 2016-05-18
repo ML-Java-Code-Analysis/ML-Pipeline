@@ -19,8 +19,7 @@ def get_simple_linear_train_dataset():
         "sixmonth_bugs",
         datetime.date(2015, 1, 1),
         datetime.date(2015, 1, 31),
-        False,
-        "SimpleLinearTrain"
+        label="SimpleLinearTrain"
     )
 
     dataset.data = np.array([
@@ -60,8 +59,7 @@ def get_simple_linear_test_dataset():
         "sixmonth_bugs",
         datetime.date(2015, 2, 1),
         datetime.date(2015, 2, 28),
-        False,
-        "SimpleLinearTest"
+        label="SimpleLinearTest"
     )
 
     dataset.data = np.array([
@@ -93,12 +91,13 @@ def get_simple_linear_test_dataset():
     return dataset
 
 
-def get_simple_polynomial_datasets():
+def get_simple_polynomial_datasets(n=100):
     # return get_simple_polynomial_train_dataset(), get_simple_polynomial_test_dataset()
-    return get_simple_polynomial_dataset("Train", sample_size=100), get_simple_polynomial_dataset("Test")
+    return get_simple_polynomial_dataset("Train", sample_size=n), get_simple_polynomial_dataset("Test",
+                                                                                                sample_size=int(n / 4))
 
 
-def get_simple_polynomial_dataset(label, sample_size=10):
+def get_simple_polynomial_dataset(label, sample_size=10, std=100):
     dataset = Dataset(
         5,
         10,
@@ -106,16 +105,18 @@ def get_simple_polynomial_dataset(label, sample_size=10):
         "sixmonth_bugs",
         datetime.date(2015, 1, 1),
         datetime.date(2015, 1, 31),
-        False,
-        label
+        label=label
     )
 
-    dataset.data = np.random.rand(sample_size, 5)
+    dataset.data = np.random.rand(sample_size, 5) * 100
 
-    dataset.target = np.zeros((sample_size, 1))
+    dataset.target = np.zeros(sample_size)
     for i, row in enumerate(dataset.data):
-        dataset.target[i] = 8 + 3 * row[0] + row[1] + row[2] ** 2 + row[2] * row[4]
-
+        value = 8 + 3 * row[0] + row[1] + row[2] ** 2 + row[2] * row[4]
+        if std > 0:
+            dataset.target[i] = np.random.normal(value, std)
+        else:
+            dataset.target[i] = value
     return dataset
 
 
@@ -127,8 +128,7 @@ def get_simple_polynomial_train_dataset():
         "sixmonth_bugs",
         datetime.date(2015, 1, 1),
         datetime.date(2015, 1, 31),
-        False,
-        "SimpleLinearTrain"
+        label="SimpleLinearTrain"
     )
 
     dataset.data = np.array([
@@ -147,7 +147,7 @@ def get_simple_polynomial_train_dataset():
     dataset.target = np.zeros((10, 1))
 
     for i, row in enumerate(dataset.data):
-        dataset.target[i] = 3 + row[0] + row[2] ** 2 + row[2] * row[4]
+        dataset.target[i][0] = 3 + row[0] + row[2] ** 2 + row[2] * row[4]
 
     return dataset
 
@@ -160,8 +160,7 @@ def get_simple_polynomial_test_dataset():
         "sixmonth_bugs",
         datetime.date(2015, 1, 1),
         datetime.date(2015, 1, 31),
-        False,
-        "SimpleLinearTrain"
+        label="SimpleLinearTrain"
     )
 
     dataset.data = np.array([

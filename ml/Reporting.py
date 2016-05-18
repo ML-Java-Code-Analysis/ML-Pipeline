@@ -354,6 +354,7 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
         display (bool): If the plot should be displayed
         filename (str): The filename to be used when the plot is saved. Without extension.
     """
+    logging.info("Plotting target histogram for dataset %s" % dataset.label)
     histogram = {}
 
     for value in dataset.target.ravel():
@@ -366,19 +367,14 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     fig, ax1 = plt.subplots()
 
     # Histogram bar plot
-    ax1.bar(x, y, align='center', label='Target data')
-
-    ax1.set_ylim(0, max(histogram.values()))
-    ax1.set_xlim(0, max(histogram.keys()))
+    ax1.bar(x, y, align='center', width=0.8, label='Target data')
     ax1.set_xlabel("Bugs per " + dataset.target_id.lower())
     ax1.set_ylabel("Sample Count")
     ax1.legend(loc=1)
 
     # Plot Log curve
     ax2 = ax1.twinx()
-    ax2.plot(x, y_log, '-o', color='red', label='Logarithmic trend')
-    ax2.set_ylim(0, max(y_log))
-    ax2.set_xlim(0, max(histogram.keys()))
+    ax2.bar(x, y_log, align='center', width=0.4, color='red', label='Logarithmic transformation')
     ax2.legend(loc=4)
 
     title = 'Target Histogram'

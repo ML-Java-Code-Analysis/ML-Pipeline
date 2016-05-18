@@ -13,7 +13,7 @@ MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
 
 KERNEL_LINEAR= 'linear'
-KERNEL_POLYNOMIAL = 'polynomial'
+KERNEL_POLYNOMIAL = 'poly'
 KERNEL_RBF = 'rbf'
 KERNEL_SIGMOID = 'sigmoid'
 
@@ -78,7 +78,7 @@ def create_svr_model(C=None, kernel=None):
     return svm.SVR(
         kernel=kernel,
         C=C,
-        cache_size=8000
+        cache_size=8000,
     )
 
 

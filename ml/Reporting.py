@@ -15,9 +15,6 @@ from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 from terminaltables import AsciiTable as Table
 
-# TODO: Verteilung der FEhler
-# TODO: Beispiele Versionen (als liste übergeben oder so)
-# TODO: Score im Verhältnis zu z.B. Alter der Files setzen oder zum Alter des Repos
 from ml import Model
 from utils import Config
 
@@ -225,7 +222,7 @@ def get_report_comparisation_table(reports, score_attrs=SCORE_R2S):
 
 
 def save_report_file(content, filename="report", timestamp=True, file_ext="txt", directory=None,
-                     timestamp_format="%Y_%m_%d_%H_%M", config=True):
+                     timestamp_format="%Y_%m_%d_%H_%M"):
     """ Saves a report string to a file.
 
     Args:
@@ -360,7 +357,7 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     for value in dataset.target.ravel():
         histogram[value] = histogram.get(value, 0) + 1
 
-    x = np.arange(len(histogram.keys()))
+    x = np.arange(len(histogram))
     y = [histogram[key] for key in sorted(histogram.keys())]
     y_log = np.log(y)
 

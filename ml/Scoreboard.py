@@ -5,7 +5,6 @@ from operator import attrgetter
 
 from utils import Config
 
-# TODO: maybe make this configurable? Low prio.
 SCOREBOARD_FILE = 'scores.scoreboard'
 SEPARATOR = ";"
 FEATURE_SEPARATOR = ","

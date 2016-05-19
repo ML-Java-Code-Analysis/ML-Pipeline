@@ -48,6 +48,8 @@ dataset_features = None
 ml_model = None
 ml_feature_scaling = False
 ml_polynomial_degree = 1
+ml_log_transform_target = False
+ml_log_transform_base = 'n'
 ml_alpha = None
 ml_alpha_range = None
 ml_C = None
@@ -111,6 +113,8 @@ def read_config(config_file):
     _read_option(config, ml_section, 'model', optional=False)
     _read_option(config, ml_section, 'polynomial_degree', value_type=TYPE_INT)
     _read_option(config, ml_section, 'feature_scaling', value_type=TYPE_BOOLEAN)
+    _read_option(config, ml_section, 'log_transform_target', value_type=TYPE_BOOLEAN)
+    _read_option(config, ml_section, 'log_transform_base', value_type=TYPE_STR)
     _read_option(config, ml_section, 'alpha', value_type=TYPE_FLOAT)
     _read_option(config, ml_section, 'alpha_range', value_type=TYPE_FLOAT_LIST)
     _read_option(config, ml_section, 'C', target='ml_C', value_type=TYPE_FLOAT)

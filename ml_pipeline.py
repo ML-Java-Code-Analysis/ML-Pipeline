@@ -11,7 +11,7 @@ if platform.system() == 'Linux':
     # Force matplotlib to not use any Xwindows backend.
     matplotlib.use('Agg')
 
-from ml import Dataset, Model, Predict, Scoreboard
+from ml import Dataset, Model, Predict, Scoreboard, LogTransform
 from ml import Reporting
 from model import DB
 from model.DB import DBError
@@ -49,6 +49,8 @@ def main():
         eager_load=Config.database_eager_load)
     if train_dataset is None:
         die("Training Dataset could not be created!")
+    if Config.ml_log_transform_target:
+        train_dataset.target = LogTransform.log_transform(train_dataset.target, base=Config.ml_log_transform_base)
 
     logging.info("Reading test dataset")
     test_dataset = Dataset.get_dataset(
@@ -64,6 +66,8 @@ def main():
         eager_load=Config.database_eager_load)
     if test_dataset is None:
         die("Test Dataset could not be created!")
+    if Config.ml_log_transform_target:
+        test_dataset.target = LogTransform.log_transform(test_dataset.target, base=Config.ml_log_transform_base)
 
     logging.info("Creating and training model with training dataset")
     model = Model.create_model(
@@ -97,11 +101,23 @@ def main():
         model)
 
     logging.debug("Creating reports from predictions")
-    baseline_mean_report = Reporting.Report(test_dataset.target, baseline_mean_prediction, "Mean Baseline")
-    baseline_med_report = Reporting.Report(test_dataset.target, baseline_med_prediction, "Median Baseline")
-    baseline_wr_report = Reporting.Report(test_dataset.target, baseline_wr_prediction, "Weighted Random Baseline")
-    training_report = Reporting.Report(train_dataset.target, training_prediction, "Training")
-    test_report = Reporting.Report(test_dataset.target, test_prediction, "Test")
+
+    train_target = train_dataset.target
+    test_target = test_dataset.target
+    if Config.ml_log_transform_target:
+        train_target = LogTransform.exp_transform(train_target, Config.ml_log_transform_base)
+        training_prediction = LogTransform.exp_transform(training_prediction, Config.ml_log_transform_base)
+        test_target = LogTransform.exp_transform(test_target, Config.ml_log_transform_base)
+        test_prediction = LogTransform.exp_transform(test_prediction, Config.ml_log_transform_base)
+        baseline_mean_prediction = LogTransform.exp_transform(baseline_mean_prediction, Config.ml_log_transform_base)
+        baseline_med_prediction = LogTransform.exp_transform(baseline_med_prediction, Config.ml_log_transform_base)
+        baseline_wr_prediction = LogTransform.exp_transform(baseline_wr_prediction, Config.ml_log_transform_base)
+
+    baseline_mean_report = Reporting.Report(test_target, baseline_mean_prediction, "Mean Baseline")
+    baseline_med_report = Reporting.Report(test_target, baseline_med_prediction, "Median Baseline")
+    baseline_wr_report = Reporting.Report(test_target, baseline_wr_prediction, "Weighted Random Baseline")
+    training_report = Reporting.Report(train_target, training_prediction, "Training")
+    test_report = Reporting.Report(test_target, test_prediction, "Test")
 
     base_entry = Scoreboard.create_entry_from_config(baseline_wr_report)
     test_entry = Scoreboard.create_entry_from_config(test_report)
@@ -127,11 +143,11 @@ def main():
         add_to_report(comparisation_table.table)
 
         category_table = Reporting.get_category_table(
-            train_dataset.target, training_prediction, label="Training prediction")
+            train_target, training_prediction, label="Training prediction")
         add_to_report(category_table.table)
 
         category_table = Reporting.get_category_table(
-            test_dataset.target, test_prediction, label="Test prediction")
+            test_target, test_prediction, label="Test prediction")
         add_to_report(category_table.table)
 
         if Config.ml_polynomial_degree == 1:

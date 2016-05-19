@@ -20,7 +20,7 @@ KERNEL_SIGMOID = 'sigmoid'
 
 # noinspection PyPep8Naming
 def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False,
-                 alpha=1.0, alpha_range=None, C=None, C_range=None, kernel=None):
+                 alpha=1.0, alpha_range=None, C=None, C_range=None, kernel=None, sparse=False):
     """ Creates a new model of the specified type.
 
     Args:
@@ -33,6 +33,7 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
         C: The regularization parameter für SVR. Will only be used if applicable to the model type.
         C_range: A range of regularization parameters for SVR. Will only be used with cross validation.
         kernel (str): The kernel to use, if applicable to the model type.
+        sparse (bool): If a sparse feature matrix is used.
 
     Returns:
         (sklearn.pipeline.Pipeline) The estimator model.
@@ -59,7 +60,7 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
     if polynomial_degree > 1:
         steps.append(("poly", PolynomialFeatures(degree=polynomial_degree)))
     if feature_scaling:
-        steps.append(("scale", StandardScaler()))
+        steps.append(("scale", StandardScaler(with_mean=not sparse)))
     steps.append((model_type, model))
 
     return Pipeline(steps)

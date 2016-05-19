@@ -6,6 +6,10 @@ import os
 from datetime import datetime
 
 import numpy as np
+from scipy.sparse.construct import hstack
+from scipy.sparse.coo import coo_matrix
+from scipy.sparse.csr import csr_matrix
+from sklearn.externals import joblib
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
 
@@ -16,7 +20,7 @@ from model.objects.Repository import Repository
 
 class Dataset:
     def __init__(self, total_feature_count, version_count, feature_list, target_id, start, end,
-                 ngram_sizes=None, ngram_levels=None, label=""):
+                 ngram_sizes=None, ngram_levels=None, label="", sparse=False):
         """" Initialize an empty dataset.
 
         A dataset consists of two components:
@@ -33,6 +37,7 @@ class Dataset:
             ngram_sizes (list[int]): Optional. The ngram-sizes in this dataset (e.g. [1, 2] for 1-grams and 2-grams)
             ngram_levels (list[int]): Optional. The ngram-levels in this dataset.
             label (str): An arbitrary label, e.g. "Test", for this dataset. Useful when caching!
+            sparse (bool): If the data and target matrices should be sparse. Recommended in combination with ngrams.
         """
         ngram_count = 0
         if ngram_sizes and ngram_levels:
@@ -40,7 +45,10 @@ class Dataset:
         logging.debug("Initializing Dataset with  %i versions, %i features and %i ngram vectors." % (
             version_count, total_feature_count, ngram_count))
 
-        self.data = np.zeros((version_count, total_feature_count + ngram_count))
+        if sparse:
+            self.data = csr_matrix((version_count, total_feature_count + ngram_count), dtype=np.float64)
+        else:
+            self.data = np.zeros((version_count, total_feature_count + ngram_count))
         self.target = np.zeros(version_count)
         self.feature_list = feature_list
         self.target_id = target_id
@@ -49,6 +57,7 @@ class Dataset:
         self.ngram_sizes = ngram_sizes
         self.ngram_levels = ngram_levels
         self.label = label
+        self.sparse = sparse
 
     def has_ngrams(self):
         """ True if this dataset contains ngrams. Must have at least one ngram size and level."""
@@ -56,7 +65,7 @@ class Dataset:
 
 
 def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=None, ngram_levels=None, label="",
-                cache=False, cache_directory=None, eager_load=False):
+                cache=False, cache_directory=None, eager_load=False, sparse=False):
     """ Reads a dataset from a repository in a specific time range.
 
     If cache=True, the dataset will be read from a file, if one exists. If not, after reading from the DB, it will
@@ -75,6 +84,7 @@ def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=Non
         cache (bool): If True, caching will be used.
         cache_directory (bool): Optional. The directory path for the cache files. If None, the working dir will be used.
         eager_load (bool): If true, all data will be loaded eagerly. This reduces database calls, but uses a lot of RAM.
+        sparse (bool): If the data and target matrices should be sparse. Recommended in combination with ngrams.
 
     Returns:
         Dataset: The populated dataset.
@@ -83,12 +93,12 @@ def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=Non
         cache_directory = os.getcwd()
     if cache:
         dataset = load_dataset_file(cache_directory, label, feature_list, target_id, start, end, ngram_sizes,
-                                    ngram_levels)
+                                    ngram_levels, sparse=sparse)
         if dataset is not None:
             return dataset
 
     dataset = get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_sizes, ngram_levels,
-                                  label=label, eager_load=eager_load)
+                                  label=label, eager_load=eager_load, sparse=sparse)
 
     if dataset is not None and cache:
         save_dataset_file(dataset, cache_directory)
@@ -97,7 +107,7 @@ def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=Non
 
 
 def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_sizes=None, ngram_levels=None, label="",
-                        eager_load=False):
+                        eager_load=False, sparse=False):
     """ Reads a dataset from a repository in a specific time range
 
     Args:
@@ -110,6 +120,7 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
         ngram_levels (list[int]): Optional. The ngram-levels to be loaded in the dataset.
         label (str): The label to be assigned to the dataset.
         eager_load (bool): If true, all data will be loaded eagerly. This reduces database calls, but uses a lot of RAM.
+        sparse (bool): If the data and target matrices should be sparse. Recommended in combination with ngrams.
 
     Returns:
         Dataset: The populated dataset.
@@ -157,7 +168,7 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
             str(ngram_sizes), str(ngram_levels), ngram_count))
 
     dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, ngram_sizes,
-                      ngram_levels, label)
+                      ngram_levels, label, sparse=sparse)
     i = 0
     for version in versions:
         if len(version.upcoming_bugs) == 0:
@@ -170,12 +181,12 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
         j = 0
         for feature_value in version.feature_values:
             if feature_value.feature_id in feature_list:
-                dataset.data[i][j] = feature_value.value
+                dataset.data[i, j] = feature_value.value
                 j += 1
         if use_ngrams:
             for ngram_vector in get_ngram_vector_list(version, ngram_sizes, ngram_levels):
                 for ngram_value in ngram_vector.ngram_values.split(','):
-                    dataset.data[i][j] = int(ngram_value)
+                    dataset.data[i, j] = int(ngram_value)
                     j += 1
 
         if i % 100 == 0:
@@ -312,15 +323,35 @@ def save_dataset_file(dataset, directory):
     """
     filepath = os.path.join(directory, generate_filename_for_dataset(dataset))
     header = get_file_header(dataset)
-    concatenated_array = np.concatenate((dataset.data, dataset.target[np.newaxis].T), axis=1)
 
     logging.info("Saving dataset %s to path %s." % (dataset.label, filepath))
-    np.savetxt(filepath, concatenated_array, header=header)
+    if dataset.sparse:
+        concatenated = hstack([dataset.data, dataset.target])
+        save_sparse_matrix(concatenated, filepath)
+    else:
+        concatenated = np.concatenate((dataset.data, dataset.target[np.newaxis].T), axis=1)
+        save_dense_matrix(concatenated, filepath, header)
     logging.debug("Saving successful")
 
 
+def save_dense_matrix(data, filepath, header=""):
+    np.savetxt(filepath, data, header=header)
+
+
+def load_dense_matrix(filepath):
+    return np.loadtxt(filepath)
+
+
+def save_sparse_matrix(data, filepath):
+    joblib.dump(data, filepath)
+
+
+def load_sparse_matrix(filepath):
+    return joblib.load(filepath)
+
+
 def load_dataset_file(directory, label, feature_list, target_id, start, end, ngram_sizes, ngram_levels,
-                      strftime_format="%Y_%m_%d"):
+                      strftime_format="%Y_%m_%d", sparse=False):
     """ Load a dataset from a cache file.
 
     Args:
@@ -333,6 +364,7 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, ngr
         ngram_sizes (list[int]): Optional. The ngram-sizes in this dataset (e.g. [1, 2] for 1-grams and 2-grams)
         ngram_levels (list[int]): Optional. The ngram-levels in this dataset.
         strftime_format (str): Optional. The datetime string format.
+        sparse (bool): If the data and target matrices should be sparse. Recommended in combination with ngrams.
 
     Returns:
         Dataset: The dataset, if one was retrieved. Otherwise None.
@@ -341,16 +373,23 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, ngr
     filepath = os.path.join(directory, filename)
     logging.debug("Attempting to load cached dataset from %s" % filepath)
     if os.path.isfile(filepath):
-        concatenated_array = np.loadtxt(filepath)
 
-        data, target = np.hsplit(concatenated_array, [-1])
+        if sparse:
+            concatenated = load_sparse_matrix(filepath)
+            if type(concatenated) == coo_matrix:
+                concatenated = concatenated.tocsr()
+            data, target = concatenated[:, :-1], concatenated[:, -1]
+            target = target.todense()
+        else:
+            concatenated = load_dense_matrix(filepath)
+            data, target = np.hsplit(concatenated, [-1])
+            target = target.T[0]
 
         logging.debug(
             "Successfully retrieved data %s and target %s from cache file." % (str(data.shape), str(target.shape)))
         dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, ngram_sizes, ngram_levels,
-                          label)
+                          label, sparse=sparse)
         dataset.data = data
-        dataset.target = target.T[0]
         return dataset
     logging.debug("Cached dataset not found.")
     return None

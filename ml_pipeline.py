@@ -46,7 +46,9 @@ def main():
         ngram_levels=Config.dataset_ngram_levels,
         label="Training",
         cache=Config.dataset_cache,
-        eager_load=Config.database_eager_load)
+        eager_load=Config.database_eager_load,
+        sparse=Config.dataset_sparse
+        )
     if train_dataset is None:
         die("Training Dataset could not be created!")
     if Config.ml_log_transform_target:
@@ -63,7 +65,9 @@ def main():
         ngram_levels=Config.dataset_ngram_levels,
         label="Test",
         cache=Config.dataset_cache,
-        eager_load=Config.database_eager_load)
+        eager_load=Config.database_eager_load,
+        sparse=Config.dataset_sparse
+    )
     if test_dataset is None:
         die("Test Dataset could not be created!")
     if Config.ml_log_transform_target:
@@ -79,7 +83,8 @@ def main():
         alpha_range=Config.ml_alpha_range,
         C=Config.ml_C,
         C_range=Config.ml_C_range,
-        kernel=Config.ml_kernel
+        kernel=Config.ml_kernel,
+        sparse=Config.dataset_sparse
     )
 
     Model.train_model(

@@ -34,6 +34,7 @@ repository_name = None
 
 # Dataset options
 dataset_cache = False
+dataset_sparse = True
 dataset_cache_dir = None
 dataset_target = None
 dataset_train_start = None
@@ -99,6 +100,7 @@ def read_config(config_file):
 
     dataset_section = 'DATASET'
     _read_option(config, dataset_section, 'cache', value_type=TYPE_BOOLEAN)
+    _read_option(config, dataset_section, 'sparse', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'cache_dir', value_type=TYPE_BOOLEAN)
     _read_option(config, dataset_section, 'target', optional=False)
     _read_option(config, dataset_section, 'train_start', optional=False, value_type=TYPE_DATE)

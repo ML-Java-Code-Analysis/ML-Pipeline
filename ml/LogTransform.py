@@ -22,7 +22,7 @@ def log_transform(x, base='n'):
             x = np.log(x) / np.log(base)
     else:
         raise ValueError("'%s' is not a valid base for log transform!")
-    x[x < 0] = -999999  # Remove -inf from array, kind of a bad approximation but hey...
+    x[x < 0] = np.finfo(np.float64).min  # Remove -inf from array, replace with best possible approximation.
     return x
 
 

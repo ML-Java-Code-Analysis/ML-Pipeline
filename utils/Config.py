@@ -34,7 +34,7 @@ repository_name = None
 
 # Dataset options
 dataset_cache = False
-dataset_sparse = True
+dataset_sparse = False
 dataset_cache_dir = None
 dataset_target = None
 dataset_train_start = None

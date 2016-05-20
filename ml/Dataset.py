@@ -292,10 +292,10 @@ def hash_features(feature_list):
 def generate_filename_for_dataset(dataset, strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     return generate_filename(dataset.label, dataset.feature_list, dataset.target_id, dataset.start, dataset.end,
-                             dataset.ngram_sizes, dataset.ngram_levels, strftime_format)
+                             dataset.ngram_sizes, dataset.ngram_levels, dataset.sparse, strftime_format)
 
 
-def generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels,
+def generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels, sparse,
                       strftime_format="%Y_%m_%d"):
     """ Generates the filename to cache a dataset. """
     feature_hash = hash_features(feature_list)
@@ -305,8 +305,9 @@ def generate_filename(label, feature_list, target_id, start, end, ngram_sizes, n
         ngram_str = "ngrams_" + "-".join([str(x) for x in ngram_sizes]) + "_" + "-".join([str(x) for x in ngram_sizes])
     else:
         ngram_str = "ngrams_no"
+    sparse_str = "sparse" if sparse else "dense"
     return "_".join(
-        [label, start_str, end_str, target_id, ngram_str, feature_hash]) + ".dataset"
+        [label, start_str, end_str, target_id, ngram_str, sparse_str, feature_hash]) + ".dataset"
 
 
 def get_file_header(dataset):
@@ -326,7 +327,7 @@ def save_dataset_file(dataset, directory):
 
     logging.info("Saving dataset %s to path %s." % (dataset.label, filepath))
     if dataset.sparse:
-        concatenated = hstack([dataset.data, dataset.target])
+        concatenated = hstack([dataset.data, dataset.target[np.newaxis].T])
         save_sparse_matrix(concatenated, filepath)
     else:
         concatenated = np.concatenate((dataset.data, dataset.target[np.newaxis].T), axis=1)
@@ -369,7 +370,8 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, ngr
     Returns:
         Dataset: The dataset, if one was retrieved. Otherwise None.
     """
-    filename = generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels, strftime_format)
+    filename = generate_filename(label, feature_list, target_id, start, end, ngram_sizes, ngram_levels, sparse,
+                                 strftime_format)
     filepath = os.path.join(directory, filename)
     logging.debug("Attempting to load cached dataset from %s" % filepath)
     if os.path.isfile(filepath):

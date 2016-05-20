@@ -385,7 +385,7 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, ngr
         else:
             concatenated = load_dense_matrix(filepath)
             data, target = np.hsplit(concatenated, [-1])
-            target = target.T[0]
+        target = np.squeeze(np.asarray(target))
 
         logging.debug(
             "Successfully retrieved data %s and target %s from cache file." % (str(data.shape), str(target.shape)))

@@ -5,10 +5,13 @@ from scipy.sparse.csc import csc_matrix
 from scipy.sparse.csr import csr_matrix
 
 
-def log_transform(x, base='n'):
+def log_transform(x, base='n', plusone=True):
     if type(x) in (csc_matrix, csr_matrix):
         x.data = log_transform(x.data, base)
         return x
+
+    if plusone:
+        x += 1
 
     if str(base) == 'n':
         x = np.log(x)
@@ -26,15 +29,19 @@ def log_transform(x, base='n'):
     return x
 
 
-def exp_transform(x, base='n'):
+def exp_transform(x, base='n', minusone=True):
     if type(x) in (csc_matrix, csr_matrix):
         x.data = exp_transform(x.data, base)
         return x
 
     if str(base) == 'n':
-        return np.exp(x)
+        x = np.exp(x)
     elif str(base).isnumeric():
         base = int(base)
-        return np.power(base, x)
+        x = np.power(base, x)
     else:
         raise ValueError("'%s' is not a valid base for log transform!")
+
+    if minusone:
+        x -= 1
+    return x

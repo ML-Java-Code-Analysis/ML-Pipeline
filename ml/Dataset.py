@@ -390,6 +390,7 @@ def load_dataset_file(directory, label, feature_list, target_id, start, end, ngr
         dataset = Dataset(data.shape[1], data.shape[0], feature_list, target_id, start, end, ngram_sizes, ngram_levels,
                           label, sparse=sparse)
         dataset.data = data
+        dataset.target = target
         return dataset
     logging.debug("Cached dataset not found.")
     return None

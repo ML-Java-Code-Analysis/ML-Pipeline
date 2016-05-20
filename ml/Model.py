@@ -20,7 +20,8 @@ KERNEL_SIGMOID = 'sigmoid'
 
 # noinspection PyPep8Naming
 def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False,
-                 alpha=1.0, alpha_range=None, C=None, C_range=None, kernel=None, sparse=False):
+                 alpha=1.0, alpha_range=None, C=None, C_range=None, kernel=None, svr_degree=None, svr_epsilon=None,
+                 svr_gamma=None, svr_coef0=None, sparse=False, ):
     """ Creates a new model of the specified type.
 
     Args:
@@ -34,6 +35,10 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
         C_range: A range of regularization parameters for SVR. Will only be used with cross validation.
         kernel (str): The kernel to use, if applicable to the model type.
         sparse (bool): If a sparse feature matrix is used.
+        svr_degree (int): Polynomial degree parameter for the SVR kernel 'poly'
+        svr_epsilon (float): Epsilon parameter for SVR. Specifies the epsilon tube. (see sklearn for more info)
+        svr_gamma (float): Kernel coefficient for SVR kernels 'rbf', 'poly' and 'sigmoid'
+        svr_coef0 (float): Independent term (or bias) for SVR kernels 'poly' and 'sigmoid'
 
     Returns:
         (sklearn.pipeline.Pipeline) The estimator model.
@@ -52,7 +57,7 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
         if cross_validation:
             model = create_svr_cv_model(C_range, kernel)
         else:
-            model = create_svr_model(C, kernel)
+            model = create_svr_model(C, kernel, svr_degree, svr_epsilon, svr_gamma, svr_coef0)
     else:
         raise ValueError("The model type %s is not supported." % model_type)
 
@@ -75,11 +80,15 @@ def create_svr_cv_model(C_range=None, kernel=None):
 
 
 # noinspection PyPep8Naming
-def create_svr_model(C=None, kernel=None):
+def create_svr_model(C=None, kernel=None, degree=None, epsilon=None, gamma=None, coef0=None):
     return svm.SVR(
         kernel=kernel,
         C=C,
         cache_size=8000,
+        degree=degree,
+        epsilon=epsilon,
+        gamma=gamma,
+        coef0=coef0
     )
 
 

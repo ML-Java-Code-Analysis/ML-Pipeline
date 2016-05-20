@@ -84,6 +84,10 @@ def main():
         C=Config.ml_C,
         C_range=Config.ml_C_range,
         kernel=Config.ml_kernel,
+        svr_degree=Config.ml_svr_degree,
+        svr_epsilon=Config.ml_svr_epsilon,
+        svr_gamma=Config.ml_svr_gamma,
+        svr_coef0=Config.ml_svr_coef0,
         sparse=Config.dataset_sparse
     )
 

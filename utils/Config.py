@@ -56,7 +56,11 @@ ml_alpha_range = None
 ml_C = None
 ml_C_range = None
 ml_cross_validation = None
-ml_kernel = 'rbf'
+ml_kernel = 'poly'
+ml_svr_degree = None
+ml_svr_epsilon = None
+ml_svr_gamma = None
+ml_svr_coef0 = None
 
 
 def read_config(config_file):
@@ -123,6 +127,10 @@ def read_config(config_file):
     _read_option(config, ml_section, 'C_range', target='ml_C_range', value_type=TYPE_FLOAT_LIST)
     _read_option(config, ml_section, 'cross_validation', value_type=TYPE_BOOLEAN)
     _read_option(config, ml_section, 'kernel')
+    _read_option(config, ml_section, 'svr_degree', value_type=TYPE_INT)
+    _read_option(config, ml_section, 'svr_epsilon', value_type=TYPE_FLOAT)
+    _read_option(config, ml_section, 'svr_gamma', value_type=TYPE_FLOAT)
+    _read_option(config, ml_section, 'svr_coef0', value_type=TYPE_FLOAT)
 
 
 TYPE_STR = 1

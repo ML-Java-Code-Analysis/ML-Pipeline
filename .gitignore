@@ -4,6 +4,7 @@
 *.scoreboard
 report*.txt
 *curve.png
+*.npy
 
 # PyCharm Stuff
 .idea/

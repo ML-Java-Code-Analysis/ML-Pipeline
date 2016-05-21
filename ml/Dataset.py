@@ -9,6 +9,7 @@ import numpy as np
 from scipy.sparse.construct import hstack
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
+from scipy.sparse.dok import dok_matrix
 from sklearn.externals import joblib
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import text
@@ -20,7 +21,7 @@ from model.objects.Repository import Repository
 
 class Dataset:
     def __init__(self, total_feature_count, version_count, feature_list, target_id, start, end,
-                 ngram_sizes=None, ngram_levels=None, label="", sparse=False):
+                 ngram_sizes=None, ngram_levels=None, label="", sparse=False, dok=False):
         """" Initialize an empty dataset.
 
         A dataset consists of two components:
@@ -38,6 +39,7 @@ class Dataset:
             ngram_levels (list[int]): Optional. The ngram-levels in this dataset.
             label (str): An arbitrary label, e.g. "Test", for this dataset. Useful when caching!
             sparse (bool): If the data and target matrices should be sparse. Recommended in combination with ngrams.
+            dok (bool): If a dok-type sparse matrix should be used. Dok is faster to update. Can be converted to CSR.
         """
         ngram_count = 0
         if ngram_sizes and ngram_levels:
@@ -45,10 +47,14 @@ class Dataset:
         logging.debug("Initializing Dataset with  %i versions, %i features and %i ngram vectors." % (
             version_count, total_feature_count, ngram_count))
 
+        dimension = (version_count, total_feature_count + ngram_count)
         if sparse:
-            self.data = csr_matrix((version_count, total_feature_count + ngram_count), dtype=np.float64)
+            if dok:
+                self.data = dok_matrix(dimension, dtype=np.float64)
+            else:
+                self.data = csr_matrix(dimension, dtype=np.float64)
         else:
-            self.data = np.zeros((version_count, total_feature_count + ngram_count))
+            self.data = np.zeros(dimension)
         self.target = np.zeros(version_count)
         self.feature_list = feature_list
         self.target_id = target_id
@@ -62,6 +68,18 @@ class Dataset:
     def has_ngrams(self):
         """ True if this dataset contains ngrams. Must have at least one ngram size and level."""
         return self.ngram_sizes and self.ngram_levels
+
+    def to_csr(self):
+        """ Converts the sparse data matrix to CSR. This is more efficient to calculate with. """
+        if self.sparse and type(self.data) != csr_matrix and hasattr(self.data, 'tocsr'):
+            logging.debug("Converting data matrix to CSR Matrix")
+            self.data.tocsr()
+
+    def to_dok(self):
+        """ Converts the sparse data matrix to DOK. This is more efficient to update or construct. """
+        if self.sparse  and type(self.data) != csr_matrix and hasattr(self.data, 'todok'):
+            logging.debug("Converting data matrix to DOK Matrix")
+            self.data.todok()
 
 
 def get_dataset(repository, start, end, feature_list, target_id, ngram_sizes=None, ngram_levels=None, label="",
@@ -168,7 +186,7 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
             str(ngram_sizes), str(ngram_levels), ngram_count))
 
     dataset = Dataset(feature_count + ngram_count, len(versions), feature_list, target_id, start, end, ngram_sizes,
-                      ngram_levels, label, sparse=sparse)
+                      ngram_levels, label, sparse=sparse, dok=True)
     i = 0
     for version in versions:
         if len(version.upcoming_bugs) == 0:
@@ -194,6 +212,9 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
 
         i += 1
     logging.info("All versions processed.")
+
+    if sparse:
+        dataset.to_csr()
 
     session.close()
     return dataset

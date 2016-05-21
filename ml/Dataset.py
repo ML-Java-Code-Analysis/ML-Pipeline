@@ -323,7 +323,7 @@ def generate_filename(label, feature_list, target_id, start, end, ngram_sizes, n
     start_str = start.strftime(strftime_format)
     end_str = end.strftime(strftime_format)
     if ngram_levels and ngram_sizes:
-        ngram_str = "ngrams_" + "-".join([str(x) for x in ngram_sizes]) + "_" + "-".join([str(x) for x in ngram_sizes])
+        ngram_str = "ngrams_" + "-".join([str(x) for x in ngram_sizes]) + "_" + "-".join([str(x) for x in ngram_levels])
     else:
         ngram_str = "ngrams_no"
     sparse_str = "sparse" if sparse else "dense"

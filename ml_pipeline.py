@@ -80,9 +80,7 @@ def main():
         polynomial_degree=Config.ml_polynomial_degree,
         cross_validation=Config.ml_cross_validation,
         alpha=Config.ml_alpha,
-        alpha_range=Config.ml_alpha_range,
         C=Config.ml_C,
-        C_range=Config.ml_C_range,
         kernel=Config.ml_kernel,
         svr_degree=Config.ml_svr_degree,
         svr_epsilon=Config.ml_svr_epsilon,
@@ -187,12 +185,12 @@ def main():
                 save=Config.reporting_save_charts,
             )
 
-        if Config.reporting_validation_curve:
+        if Config.reporting_validation_curve and Config.ml_cross_validation :
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
-                alpha_range=Config.ml_alpha_range,
-                C_range=Config.ml_C_range,
+                alpha=Config.ml_alpha,
+                C=Config.ml_C_range,
                 kernel=Config.ml_kernel,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts
@@ -204,9 +202,7 @@ def main():
                 train_dataset=train_dataset,
                 cross_validation=Config.ml_cross_validation,
                 alpha=Config.ml_alpha,
-                alpha_range=Config.ml_alpha_range,
                 C=Config.ml_C,
-                C_range=Config.ml_C_range,
                 kernel=Config.ml_kernel,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts

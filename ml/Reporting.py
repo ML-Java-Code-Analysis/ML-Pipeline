@@ -330,10 +330,10 @@ def get_category(value, categories):
 def get_config_table():
     config_attrs = [attr for attr in dir(Config) if
                     not callable(getattr(Config, attr)) and  # No functions please
-                    not attr.startswith("_") and             # No internal/private attributes
-                    not attr.isupper() and                   # No constants
-                    not attr.startswith('database') and      # Database config is not so relevant
-                    not attr.startswith('reporting')         # Reporting config is not so relevant
+                    not attr.startswith("_") and  # No internal/private attributes
+                    not attr.isupper() and  # No constants
+                    not attr.startswith('database') and  # Database config is not so relevant
+                    not attr.startswith('reporting')  # Reporting config is not so relevant
                     ]
 
     table_data = [["Attribute", "Value"]] + [[attr, str(getattr(Config, attr))] for attr in config_attrs]
@@ -387,7 +387,7 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     plt.clf()
 
 
-def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha_range=None, C_range=None,
+def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha=None, C=None,
                           kernel=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
     if not save and not display:
         return
@@ -396,11 +396,11 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, a
     if model_type == Model.MODEL_TYPE_RIDREG:
         estimator = Model.create_ridge_model()
         param_name = "alpha"
-        param_range = alpha_range
+        param_range = alpha
     elif model_type == Model.MODEL_TYPE_SVR:
         estimator = Model.create_svr_model(kernel=kernel)
         param_name = "C"
-        param_range = C_range
+        param_range = C
     else:
         logging.warning("Validation curve is not applicable to Model type %s." % model_type)
         return
@@ -441,8 +441,9 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, a
 
 
 def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
-                        cross_validation=False, cv=None, alpha=None, alpha_range=None, C=None, C_range=None,
-                        kernel=None, n_jobs=-1, save=False, display=True, filename="learning_curve"):
+                        cross_validation=False, cv=None, alpha=None, C=None, kernel=None, svr_epsilon=None,
+                        svr_degree=None, svr_gamma=None, svr_coef0=None, n_jobs=-1, save=False, display=True,
+                        filename="learning_curve"):
     if not save and not display:
         return
 
@@ -450,10 +451,12 @@ def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1
         model_type=model_type,
         cross_validation=cross_validation,
         alpha=alpha,
-        alpha_range=alpha_range,
         C=C,
-        C_range=C_range,
         kernel=kernel,
+        svr_epsilon=svr_epsilon,
+        svr_degree=svr_degree,
+        svr_gamma=svr_gamma,
+        svr_coef0=svr_coef0
     )
 
     logging.info("Calculating learning curve")

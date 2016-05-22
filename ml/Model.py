@@ -19,9 +19,8 @@ KERNEL_SIGMOID = 'sigmoid'
 
 
 # noinspection PyPep8Naming
-def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False,
-                 alpha=1.0, C=None, kernel=None, svr_epsilon=None, svr_degree=None,
-                 svr_gamma=None, svr_coef0=None, sparse=False, ):
+def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_validation=False, alpha=1.0, C=None,
+                 kernel=None, svr_epsilon=None, svr_degree=None, svr_gamma=None, svr_coef0=None, sparse=False, ):
     """ Creates a new model of the specified type.
 
     Args:
@@ -61,9 +60,15 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
 
     steps = []
     if polynomial_degree > 1:
-        steps.append(("poly", PolynomialFeatures(degree=polynomial_degree)))
+        if not sparse:
+            steps.append(("poly", PolynomialFeatures(degree=polynomial_degree)))
+        else:
+            logging.warning("Polynomial Features for sparse matrices are not supported!")
     if feature_scaling:
-        steps.append(("scale", StandardScaler(with_mean=not sparse)))
+        if not sparse:
+            steps.append(("scale", StandardScaler(with_mean=not sparse)))
+        else:
+            logging.warning("Sparse matrices cannot be scaled with mean. Only Std scaling will be applied.")
     steps.append((model_type, model))
 
     return Pipeline(steps)

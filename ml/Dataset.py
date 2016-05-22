@@ -205,8 +205,9 @@ def get_dataset_from_db(repository, start, end, feature_list, target_id, ngram_s
         if use_ngrams:
             for ngram_vector in get_ngram_vector_list(version, ngram_sizes, ngram_levels):
                 for ngram_value in ngram_vector.ngram_values.split(','):
+                    ngram_value = int(ngram_value)
                     if not sparse or ngram_value > 0:
-                        dataset.data[i, j] = int(ngram_value)
+                        dataset.data[i, j] = ngram_value
                     j += 1
 
         if i % 100 == 0:

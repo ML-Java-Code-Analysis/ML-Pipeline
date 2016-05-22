@@ -394,10 +394,16 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, a
 
     model_type = model_type.upper()
     if model_type == Model.MODEL_TYPE_RIDREG:
+        if alpha is None or type(alpha) != list or len(alpha) == 0:
+            logging.warning("Validation curve cannot be drawn for %s when no alpha range is specified." % model_type)
+            return
         estimator = Model.create_ridge_model()
         param_name = "alpha"
         param_range = alpha
     elif model_type == Model.MODEL_TYPE_SVR:
+        if C is None or type(C) != list or len(C) == 0:
+            logging.warning("Validation curve cannot be drawn for %s when no C range is specified." % model_type)
+            return
         estimator = Model.create_svr_model(kernel=kernel)
         param_name = "C"
         param_range = C

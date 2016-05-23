@@ -53,7 +53,6 @@ ml_log_transform_target = False
 ml_log_transform_base = 'n'
 ml_alpha = None
 ml_C = None
-ml_C_range = None
 ml_cross_validation = None
 ml_kernel = 'poly'
 ml_svr_epsilon = None

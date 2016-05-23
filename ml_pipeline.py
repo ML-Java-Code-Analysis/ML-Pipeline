@@ -190,7 +190,7 @@ def main():
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
                 alpha=Config.ml_alpha,
-                C=Config.ml_C_range,
+                C=Config.ml_C,
                 kernel=Config.ml_kernel,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts

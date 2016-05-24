@@ -427,21 +427,23 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     plt.clf()
 
 
-def plot_validation_curve(model_type, train_dataset, estimator, score_attr=None, cv=None, alpha=None, C=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
+def plot_validation_curve(model_type, train_dataset, estimator, feature_scaling, polynomial_degree, kernel, svr_degree,
+                          svr_epsilon, svr_gamma, svr_coef0, sparse, score_attr=None, cv=None, alpha=None, C=None,
+                          n_jobs=-1, save=False, display=True, filename="validation_curve"):
     if not save and not display:
         return
 
-    estimator =  model = Model.create_model(
-        Config.ml_model,
-        feature_scaling=Config.ml_feature_scaling,
-        polynomial_degree=Config.ml_polynomial_degree,
+    estimator = model = Model.create_model(
+        model_type,
+        feature_scaling=feature_scaling,
+        polynomial_degree=polynomial_degree,
         cross_validation=False,
-        kernel=Config.ml_kernel,
-        svr_degree=Config.ml_svr_degree,
-        svr_epsilon=Config.ml_svr_epsilon,
-        svr_gamma=Config.ml_svr_gamma,
-        svr_coef0=Config.ml_svr_coef0,
-        sparse=Config.dataset_sparse
+        kernel=kernel,
+        svr_degree=svr_degree,
+        svr_epsilon=svr_epsilon,
+        svr_gamma=svr_gamma,
+        svr_coef0=svr_coef0,
+        sparse=sparse
     )
 
     model_type = model_type.upper()
@@ -496,7 +498,8 @@ def plot_validation_curve(model_type, train_dataset, estimator, score_attr=None,
     plt.clf()
 
 
-def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None, n_jobs=-1, save=False,
+def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None, n_jobs=-1,
+                        save=False,
                         display=True, cv=5, filename="learning_curve"):
     if not save and not display:
         return

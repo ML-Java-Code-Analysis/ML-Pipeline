@@ -201,6 +201,14 @@ def main():
                 estimator=model,
                 alpha=Config.ml_alpha,
                 C=Config.ml_C,
+                feature_scaling=Config.ml_feature_scaling,
+                polynomial_degree=Config.ml_polynomial_degree,
+                kernel=Config.ml_kernel,
+                svr_degree=Config.ml_svr_degree,
+                svr_epsilon=Config.ml_svr_epsilon,
+                svr_gamma=Config.ml_svr_gamma,
+                svr_coef0=Config.ml_svr_coef0,
+                sparse=Config.dataset_sparse,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts
             )

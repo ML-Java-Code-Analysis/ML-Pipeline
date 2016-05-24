@@ -48,7 +48,7 @@ def main():
         cache=Config.dataset_cache,
         eager_load=Config.database_eager_load,
         sparse=Config.dataset_sparse
-        )
+    )
     if train_dataset is None:
         die("Training Dataset could not be created!")
     if Config.ml_log_transform_target:
@@ -185,7 +185,7 @@ def main():
                 save=Config.reporting_save_charts,
             )
 
-        if Config.reporting_validation_curve and Config.ml_cross_validation :
+        if Config.reporting_validation_curve and Config.ml_cross_validation:
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,

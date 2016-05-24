@@ -8,6 +8,8 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing.data import PolynomialFeatures, StandardScaler
 
+from ml.SparseScaler import SparseScaler
+
 MODEL_TYPE_LINREG = 'LINEAR_REGRESSION'
 MODEL_TYPE_RIDREG = 'RIDGE_REGRESSION'
 MODEL_TYPE_SVR = 'SVR'
@@ -65,10 +67,11 @@ def create_model(model_type, feature_scaling=False, polynomial_degree=1, cross_v
         else:
             logging.warning("Polynomial Features for sparse matrices are not supported!")
     if feature_scaling:
-        if not sparse:
-            steps.append(("scale", StandardScaler(with_mean=not sparse)))
+        if sparse:
+            scaler = SparseScaler()
         else:
-            logging.warning("Sparse matrices cannot be scaled with mean. Only Std scaling will be applied.")
+            scaler = StandardScaler()
+        steps.append(("scale", scaler))
     steps.append((model_type, model))
 
     return Pipeline(steps)

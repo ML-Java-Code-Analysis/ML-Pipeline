@@ -6,6 +6,7 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn import metrics
 from sklearn.learning_curve import learning_curve
 from sklearn.learning_curve import validation_curve
 from sklearn.metrics import explained_variance_score
@@ -296,15 +297,12 @@ def get_category_table(ground_truth, predicted, categories=None, label=None):
             misses[true_category] = misses.get(true_category, 0) + 1
 
     table_data = [["Category", "Hits", "Misses", "Total"]]
+    cat_strings = get_category_strings(categories)
     for i, category in enumerate(categories):
         hit_count = hits.get(category, 0)
         miss_count = misses.get(category, 0)
 
-        cat_str = str(category)
-        if i == len(categories) - 1:
-            cat_str += "+"
-        elif categories[i + 1] - category > 1:
-            cat_str += "-" + str(categories[i + 1] - 1)
+        cat_str = cat_strings[i]
 
         record = [cat_str, str(hit_count), str(miss_count), str(hit_count + miss_count)]
         table_data.append(record)
@@ -319,12 +317,54 @@ def get_category_table(ground_truth, predicted, categories=None, label=None):
     return table
 
 
+def get_confusion_matrix(ground_truth, predicted, categories=None, label=None):
+    if categories is None:
+        categories = [0, 1, 2, 4]
+    cat_count = len(categories)
+    true_cats = [categories.index(get_category(truth, categories)) for truth in ground_truth]
+    predicted_cats = [categories.index(get_category(pred, categories)) for pred in predicted]
+
+    matrix = np.zeros((cat_count, cat_count), dtype=int)
+
+    for i, j in zip(true_cats, predicted_cats):
+        matrix[i, j] += 1
+
+    cat_strings = get_category_strings(categories)
+
+    confusion_table_data = [['Prediction ->'] + ['cat ' + cat_strings[i] for i in range(cat_count)]]
+    for i in range(cat_count):
+        confusion_table_data.append(['cat ' + cat_strings[i]] + [str(x) for x in matrix[:, i].tolist()])
+    confusion_table = Table(confusion_table_data)
+    confusion_table.title = "Confusion matrix"
+    if label:
+        confusion_table.title += ": " + label
+
+    report = "Classification report"
+    if label:
+        report += ": " + label
+    report += "\n" + metrics.classification_report(true_cats, predicted_cats, labels=cat_strings)
+
+    return confusion_table, report
+
+
 def get_category(value, categories):
     value = max(round(value), 0)
     for i, category in enumerate(categories[:-1]):
         if value < categories[i + 1]:
             return category
     return categories[-1]
+
+
+def get_category_strings(categories):
+    cat_strings = []
+    for i, category in enumerate(categories):
+        cat_str = str(category)
+        if i == len(categories) - 1:
+            cat_str += "+"
+        elif categories[i + 1] - category > 1:
+            cat_str += "-" + str(categories[i + 1] - 1)
+        cat_strings.append(cat_str)
+    return cat_strings
 
 
 def get_config_table():

@@ -157,6 +157,15 @@ def main():
             test_target, test_prediction, label="Test prediction")
         add_to_report(category_table.table)
 
+        confusion_matrix_table, classification_report = Reporting.get_confusion_matrix(test_target, test_prediction,
+                                                                                       label="Training prediction")
+        add_to_report(confusion_matrix_table.table)
+        add_to_report(classification_report)
+        confusion_matrix_table, classification_report = Reporting.get_confusion_matrix(test_target, test_prediction,
+                                                                                       label="Test prediction")
+        add_to_report(confusion_matrix_table.table)
+        add_to_report(classification_report)
+
         if Config.ml_polynomial_degree == 1:
             # Determining top features only makes sense without polynomial features.
             top_features_table = Reporting.get_top_features_table(model, train_dataset.feature_list, 10)

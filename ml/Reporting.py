@@ -427,26 +427,36 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     plt.clf()
 
 
-def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, alpha=None, C=None,
-                          kernel=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
+def plot_validation_curve(model_type, train_dataset, estimator, score_attr=None, cv=None, alpha=None, C=None, n_jobs=-1, save=False, display=True, filename="validation_curve"):
     if not save and not display:
         return
+
+    estimator =  model = Model.create_model(
+        Config.ml_model,
+        feature_scaling=Config.ml_feature_scaling,
+        polynomial_degree=Config.ml_polynomial_degree,
+        cross_validation=False,
+        kernel=Config.ml_kernel,
+        svr_degree=Config.ml_svr_degree,
+        svr_epsilon=Config.ml_svr_epsilon,
+        svr_gamma=Config.ml_svr_gamma,
+        svr_coef0=Config.ml_svr_coef0,
+        sparse=Config.dataset_sparse
+    )
 
     model_type = model_type.upper()
     if model_type == Model.MODEL_TYPE_RIDREG:
         if alpha is None or type(alpha) != list or len(alpha) == 0:
             logging.warning("Validation curve cannot be drawn for %s when no alpha range is specified." % model_type)
             return
-        estimator = Model.create_ridge_model()
-        param_name = "alpha"
-        param_range = alpha
+        param_name = "RIDGE_REGRESSION__alpha"
+        param_range = sorted(alpha)
     elif model_type == Model.MODEL_TYPE_SVR:
         if C is None or type(C) != list or len(C) == 0:
             logging.warning("Validation curve cannot be drawn for %s when no C range is specified." % model_type)
             return
-        estimator = Model.create_svr_model(kernel=kernel)
-        param_name = "C"
-        param_range = C
+        param_name = "SVR__C"
+        param_range = sorted(C)
     else:
         logging.warning("Validation curve is not applicable to Model type %s." % model_type)
         return
@@ -486,24 +496,10 @@ def plot_validation_curve(model_type, train_dataset, score_attr=None, cv=None, a
     plt.clf()
 
 
-def plot_learning_curve(model_type, train_dataset, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None,
-                        cross_validation=False, cv=None, alpha=None, C=None, kernel=None, svr_epsilon=None,
-                        svr_degree=None, svr_gamma=None, svr_coef0=None, n_jobs=-1, save=False, display=True,
-                        filename="learning_curve"):
+def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None, n_jobs=-1, save=False,
+                        display=True, cv=5, filename="learning_curve"):
     if not save and not display:
         return
-
-    estimator = Model.create_model(
-        model_type=model_type,
-        cross_validation=cross_validation,
-        alpha=alpha,
-        C=C,
-        kernel=kernel,
-        svr_epsilon=svr_epsilon,
-        svr_degree=svr_degree,
-        svr_gamma=svr_gamma,
-        svr_coef0=svr_coef0
-    )
 
     logging.info("Calculating learning curve")
     train_sizes, train_scores, valid_scores = learning_curve(

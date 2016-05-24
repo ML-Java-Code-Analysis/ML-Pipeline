@@ -198,21 +198,17 @@ def main():
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
+                estimator=model,
                 alpha=Config.ml_alpha,
                 C=Config.ml_C,
-                kernel=Config.ml_kernel,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts
             )
 
         if Config.reporting_learning_curve:
             Reporting.plot_learning_curve(
-                model_type=Config.ml_model,
                 train_dataset=train_dataset,
-                cross_validation=Config.ml_cross_validation,
-                alpha=Config.ml_alpha,
-                C=Config.ml_C,
-                kernel=Config.ml_kernel,
+                estimator=model,
                 display=Config.reporting_display_charts,
                 save=Config.reporting_save_charts
             )

@@ -198,7 +198,6 @@ def main():
             Reporting.plot_validation_curve(
                 model_type=Config.ml_model,
                 train_dataset=train_dataset,
-                estimator=model,
                 alpha=Config.ml_alpha,
                 C=Config.ml_C,
                 feature_scaling=Config.ml_feature_scaling,

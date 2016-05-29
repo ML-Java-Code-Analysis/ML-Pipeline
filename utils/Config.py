@@ -55,10 +55,10 @@ ml_alpha = None
 ml_C = None
 ml_cross_validation = None
 ml_kernel = 'poly'
-ml_svr_epsilon = None
-ml_svr_degree = None
-ml_svr_gamma = None
-ml_svr_coef0 = None
+ml_svr_epsilon = 0.1
+ml_svr_degree = 1
+ml_svr_gamma = 'auto'
+ml_svr_coef0 = 0
 
 
 def read_config(config_file):

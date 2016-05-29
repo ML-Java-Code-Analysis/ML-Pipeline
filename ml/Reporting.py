@@ -427,13 +427,13 @@ def plot_target_histogram(dataset, save=False, display=True, filename='target_hi
     plt.clf()
 
 
-def plot_validation_curve(model_type, train_dataset, estimator, feature_scaling, polynomial_degree, kernel, svr_degree,
-                          svr_epsilon, svr_gamma, svr_coef0, sparse, score_attr=None, cv=None, alpha=None, C=None,
+def plot_validation_curve(model_type, train_dataset, feature_scaling, polynomial_degree, kernel, svr_degree,
+                          svr_epsilon, svr_gamma, svr_coef0, sparse, score_attr=None, cv=5, alpha=None, C=None,
                           n_jobs=-1, save=False, display=True, filename="validation_curve"):
     if not save and not display:
         return
 
-    estimator = model = Model.create_model(
+    estimator = Model.create_model(
         model_type,
         feature_scaling=feature_scaling,
         polynomial_degree=polynomial_degree,

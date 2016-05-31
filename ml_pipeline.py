@@ -157,7 +157,7 @@ def main():
             test_target, test_prediction, label="Test prediction")
         add_to_report(category_table.table)
 
-        confusion_matrix_table, classification_report = Reporting.get_confusion_matrix(test_target, test_prediction,
+        confusion_matrix_table, classification_report = Reporting.get_confusion_matrix(train_target, training_prediction,
                                                                                        label="Training prediction")
         add_to_report(confusion_matrix_table.table)
         add_to_report(classification_report)

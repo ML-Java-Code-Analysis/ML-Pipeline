@@ -220,6 +220,22 @@ def main():
                 save=Config.reporting_save_charts
             )
 
+        if Config.reporting_confusion_matrix_chart:
+            Reporting.plot_confusion_matrix(
+                ground_truth=train_target,
+                predicted=training_prediction,
+                label="Training",
+                display=Config.reporting_display_charts,
+                save=Config.reporting_save_charts
+            )
+            Reporting.plot_confusion_matrix(
+                ground_truth=test_target,
+                predicted=test_prediction,
+                label="Test",
+                display=Config.reporting_display_charts,
+                save=Config.reporting_save_charts
+            )
+
     logging.info("All done. Exiting ML Pipeline")
 
 

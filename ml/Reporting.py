@@ -14,6 +14,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
+from sklearn.metrics import confusion_matrix
 from terminaltables import AsciiTable as Table
 
 from ml import Model
@@ -324,16 +325,13 @@ def get_confusion_matrix(ground_truth, predicted, categories=None, label=None):
     true_cats = [categories.index(get_category(truth, categories)) for truth in ground_truth]
     predicted_cats = [categories.index(get_category(pred, categories)) for pred in predicted]
 
-    matrix = np.zeros((cat_count, cat_count), dtype=int)
-
-    for i, j in zip(true_cats, predicted_cats):
-        matrix[i, j] += 1
+    cm = __get_confusion_matrix(ground_truth, predicted, categories)
 
     cat_strings = get_category_strings(categories)
 
     confusion_table_data = [['Prediction ->'] + ['cat ' + cat_strings[i] for i in range(cat_count)]]
     for i in range(cat_count):
-        confusion_table_data.append(['cat ' + cat_strings[i]] + [str(x) for x in matrix[:, i].tolist()])
+        confusion_table_data.append(['cat ' + cat_strings[i]] + [str(x) for x in cm[i, :].tolist()])
     confusion_table = Table(confusion_table_data)
     confusion_table.title = "Confusion matrix"
     if label:
@@ -345,6 +343,12 @@ def get_confusion_matrix(ground_truth, predicted, categories=None, label=None):
     report += "\n" + metrics.classification_report(true_cats, predicted_cats, labels=cat_strings)
 
     return confusion_table, report
+
+
+def __get_confusion_matrix(ground_truth, predicted, categories):
+    true_cats = [categories.index(get_category(truth, categories)) for truth in ground_truth]
+    predicted_cats = [categories.index(get_category(pred, categories)) for pred in predicted]
+    return confusion_matrix(true_cats, predicted_cats, labels=categories)
 
 
 def get_category(value, categories):
@@ -479,7 +483,7 @@ def plot_validation_curve(model_type, train_dataset, feature_scaling, polynomial
     valid_scores_mean = np.mean(valid_scores, axis=1)
     valid_scores_std = np.std(valid_scores, axis=1)
 
-    logging.debug("Displaying validation curve")
+    logging.debug("Plotting validation curve")
     plt.title("Validation curve")
     plt.xlabel(param_name)
     plt.ylabel(score_attr.upper() if score_attr else "" + "Score")
@@ -499,8 +503,7 @@ def plot_validation_curve(model_type, train_dataset, feature_scaling, polynomial
 
 
 def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.0, 5), score_attr=None, n_jobs=-1,
-                        save=False,
-                        display=True, cv=5, filename="learning_curve"):
+                        save=False, display=True, cv=5, filename="learning_curve"):
     if not save and not display:
         return
 
@@ -520,7 +523,7 @@ def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.
     valid_scores_mean = np.mean(valid_scores, axis=1)
     valid_scores_std = np.std(valid_scores, axis=1)
 
-    logging.debug("Displaying learning curve")
+    logging.debug("Plotting learning curve")
     plt.title("Learning curve")
     plt.xlabel("Training examples")
     plt.ylabel(score_attr.upper() if score_attr else "" + "Score")
@@ -532,6 +535,49 @@ def plot_learning_curve(train_dataset, estimator, train_sizes=np.linspace(.1, 1.
     plt.fill_between(train_sizes, valid_scores_mean - valid_scores_std, valid_scores_mean + valid_scores_std, alpha=0.2,
                      color="g")
     plt.legend(loc="best")
+
+    if display:
+        plt.show()
+    if save:
+        plt.savefig(filename + "_" + datetime.now().strftime("%Y_%m_%d_%H_%M") + ".png", dpi=400)
+    plt.clf()
+
+
+def plot_confusion_matrix(ground_truth, predicted, display=True, save=False, filename="confusion_matrix",
+                          categories=None, label=None):
+    if categories is None:
+        categories = [0, 1, 2, 4]
+
+    def _plot_cm(matrix, title_mod=None):
+        title = "Confusion Matrix"
+        if label:
+            title += ": " + label
+        if title_mod:
+            title += " (" + title_mod + ")"
+        plt.title(title)
+        plt.imshow(matrix, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.colorbar()
+        tick_marks = np.arange(len(categories))
+        plt.xticks(tick_marks, cat_strings)
+        plt.yticks(tick_marks, cat_strings)
+        plt.tight_layout()
+        plt.xlabel("Predicted label")
+        plt.ylabel("True label")
+
+    true_cats = [categories.index(get_category(truth, categories)) for truth in ground_truth]
+    predicted_cats = [categories.index(get_category(pred, categories)) for pred in predicted]
+    cat_strings = get_category_strings(categories)
+    cm = __get_confusion_matrix(true_cats, predicted_cats, categories)
+    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    log_str = "Plotting confusion matrix"
+    if label:
+        log_str += " (" + label + ")"
+    logging.debug(log_str)
+    plt.subplot(1, 2, 1)
+    _plot_cm(cm)
+    plt.subplot(1, 2, 2)
+    _plot_cm(cm_normalized, title_mod="Normalized")
 
     if display:
         plt.show()

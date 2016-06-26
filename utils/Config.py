@@ -26,6 +26,7 @@ reporting_file = 'report'
 reporting_target_histogram = False
 reporting_validation_curve = False
 reporting_learning_curve = False
+reporting_confusion_matrix_chart = False
 reporting_display_charts = True
 reporting_save_charts = False
 
@@ -94,6 +95,7 @@ def read_config(config_file):
     _read_option(config, reporting_section, 'target_histogram', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'validation_curve', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'learning_curve', value_type=TYPE_BOOLEAN)
+    _read_option(config, reporting_section, 'confusion_matrix_chart', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'display_charts', value_type=TYPE_BOOLEAN)
     _read_option(config, reporting_section, 'save_charts', value_type=TYPE_BOOLEAN)
 
